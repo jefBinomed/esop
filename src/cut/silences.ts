@@ -35,11 +35,12 @@ export async function detectSilences(
 ): Promise<Span[]> {
   const noise = opts.noiseDb ?? DEFAULT_SILENCE_DETECT.noiseDb;
   const min = opts.minDuration ?? DEFAULT_SILENCE_DETECT.minDuration;
-  // silencedetect écrit sur stderr ; `-f null -` évite tout fichier de sortie.
-  const { stderr } = await run("ffmpeg", [
-    "-v", "info", "-i", file,
-    "-af", `silencedetect=noise=${noise}dB:d=${min}`,
-    "-f", "null", "-",
-  ]);
+  // silencedetect écrit sur stderr ; `-f null -` évite tout fichier de sortie
+  // et `-vn` épargne le décodage vidéo, qui multiplierait le temps par dix.
+  const { stderr } = await run(
+    "ffmpeg",
+    ["-v", "info", "-vn", "-i", file, "-af", `silencedetect=noise=${noise}dB:d=${min}`, "-f", "null", "-"],
+    { maxBuffer: 16 * 1024 * 1024 },
+  );
   return parseSilenceLog(stderr, duration);
 }

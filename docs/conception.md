@@ -145,7 +145,7 @@ Nom de travail : `esop`. Une CLI, un dossier d'épisode en argument.
 | `esop montage` | `takes.md` validé | `montage.md` pré-rempli avec titres, textes et mots clés du script |
 | `esop cut` | `montage.md` | lignes barrées pour les silences et hésitations |
 | `esop zoom` | `montage.md` | annotations de cadrage |
-| `esop preview` | `montage.md` | `preview.mp4` en 540p + planche de vignettes |
+| `esop preview` | `montage.md` | `preview.mp4` coupe brute ffmpeg 960×540 + planche de vignettes |
 | `esop render` | `montage.md` | `final.mp4` 1080p30 |
 | `esop studio` | — | ouvre le studio Remotion sur l'épisode |
 
@@ -164,8 +164,15 @@ Détails qui comptent :
 - **Pattern de cadrage** : alternance large/serré sur les coupes, jamais de
   serré sur la première ligne d'un chapitre, jamais plus de trois cadrages
   identiques d'affilée. Paramétrable dans `esop.config.json`.
-- **Prévisualisation** : `remotion render --scale 0.5` plus une planche de
-  vignettes ffmpeg toutes les 5 s, que Claude peut lire.
+- **Prévisualisation** : coupe brute ffmpeg (trim, recadrage par segment,
+  concaténation) en 960×540, sans passer par Remotion. Elle sert à relire le
+  dérushage en quelques dizaines de secondes de rendu ; Remotion n'entre en
+  jeu que pour le rendu final habillé. Une planche de vignettes ffmpeg toutes
+  les 5 s complète la relecture, et Claude peut la lire.
+- **Hésitations** : whisper ne transcrit pas les « euh », même amorcé, et le
+  rush de référence n'en contient quasiment pas. Le module `cut/fillers` est
+  reporté tant qu'un besoin réel n'apparaît pas ; les coupes de contenu
+  (faux départs, reprises) passent par la relecture de `montage.md`.
 
 ## 5. Architecture
 
@@ -182,6 +189,7 @@ src/
   zoom/pattern.ts            attribution des cadrages
   montage/parse.ts           montage.md → Timeline
   montage/serialize.ts       Timeline → montage.md (préserve les annotations)
+  export/ffmpeg-preview.ts   Timeline → graphe de filtres ffmpeg (coupe brute)
   cli.ts
 remotion/
   Root.tsx                   enregistre la composition, durée calculée via calculateMetadata
