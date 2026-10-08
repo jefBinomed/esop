@@ -9,6 +9,8 @@ export interface SegmentOptions {
   readonly minGap: number;
   /** Respiration conservée de chaque côté d'un segment, en secondes. */
   readonly padding: number;
+  /** En dessous de cette durée, un segment est fusionné avec le suivant. */
+  readonly minSegment?: number;
 }
 
 /**
@@ -16,7 +18,7 @@ export interface SegmentOptions {
  * reproduit son rythme (125 segments contre 132, médiane 2,8 s), 0,12 s de
  * respiration correspond aux 0,17 à 0,3 s conservés après coupe.
  */
-export const DEFAULT_SEGMENT_OPTIONS = { minGap: 0.35, padding: 0.12 } as const;
+export const DEFAULT_SEGMENT_OPTIONS = { minGap: 0.35, padding: 0.12, minSegment: 0.5 } as const;
 
 /**
  * Découpe un rush en segments de parole à partir des silences détectés dans
@@ -24,7 +26,8 @@ export const DEFAULT_SEGMENT_OPTIONS = { minGap: 0.35, padding: 0.12 } as const;
  * deviennent des coupes, avec `padding` de respiration conservé de chaque
  * côté. Les horodatages whisper étant approximatifs, chaque mot est rattaché
  * au segment qu'il recouvre le plus, et à défaut au segment le plus proche :
- * aucun mot n'est perdu.
+ * aucun mot n'est perdu. Un segment plus court que `minSegment` (un mot
+ * isolé avant une pause) est fusionné avec le suivant, silence compris.
  */
 export function segmentsFromSilences(
   silences: readonly Span[],
@@ -41,23 +44,46 @@ export function segmentsFromSilences(
     .filter((s) => ms(s.end - s.start) >= ms(opts.minGap))
     .sort((a, b) => a.start - b.start);
 
+  // `cursor` est la fin brute du silence précédent : il n'y a de parole que
+  // si le silence suivant commence après. Les marges s'ajoutent ensuite.
   const speech: Span[] = [];
   let cursor = 0;
   for (const cut of cuts) {
-    pushSpeech(speech, cursor, cut.start + opts.padding, opts);
-    cursor = cut.end - opts.padding;
+    if (cut.start > cursor) pushSpeech(speech, cursor - opts.padding, cut.start + opts.padding, opts);
+    cursor = Math.max(cursor, cut.end);
   }
-  pushSpeech(speech, cursor, opts.duration, opts);
+  if (opts.duration > cursor) pushSpeech(speech, cursor - opts.padding, opts.duration, opts);
+  const merged = mergeShort(speech, opts.minSegment ?? DEFAULT_SEGMENT_OPTIONS.minSegment);
 
-  const attached: Word[][] = speech.map(() => []);
+  const attached: Word[][] = merged.map(() => []);
   for (const word of words) {
-    const index = bestSpanIndex(speech, word);
+    const index = bestSpanIndex(merged, word);
     if (index !== undefined) attached[index]?.push(word);
   }
 
-  return speech
+  return merged
     .map((span, i) => ({ takeId: opts.takeId, start: span.start, end: span.end, words: attached[i] ?? [] }))
     .filter((segment) => segment.words.length > 0);
+}
+
+/** Fusionne chaque intervalle trop court avec le suivant, ou le précédent pour le dernier. */
+function mergeShort(spans: readonly Span[], minSegment: number): Span[] {
+  const out: Span[] = [];
+  let pending: Span | undefined;
+  for (const span of spans) {
+    const current = pending === undefined ? span : { start: pending.start, end: span.end };
+    pending = undefined;
+    if (ms(current.end - current.start) < ms(minSegment)) {
+      pending = current;
+      continue;
+    }
+    out.push(current);
+  }
+  if (pending !== undefined) {
+    const last = out.pop();
+    out.push(last === undefined ? pending : { start: last.start, end: pending.end });
+  }
+  return out;
 }
 
 /** Segment de plus grand recouvrement avec le mot, sinon le plus proche. */

@@ -56,6 +56,18 @@ describe("segmentsFromSilences", () => {
     expect(segments).toHaveLength(1);
   });
 
+  it("fusionne un segment trop court avec le suivant, silence compris", () => {
+    const words = [w("Tu", 0.04, 0.14), w("t'es", 0.6, 0.9)];
+    const segments = segmentsFromSilences([s(0.14, 0.575)], words, { ...opts, minSegment: 0.5 });
+    expect(segments).toEqual([{ takeId: "t1", start: 0, end: 60, words }]);
+  });
+
+  it("fusionne un dernier segment trop court avec le précédent", () => {
+    const words = [w("a", 1, 2), w("b", 59.75, 59.9)];
+    const segments = segmentsFromSilences([s(2.0, 59.7)], words, { ...opts, minSegment: 0.5 });
+    expect(segments).toEqual([{ takeId: "t1", start: 0, end: 60, words }]);
+  });
+
   it("refuse une marge qui dépasserait le demi-seuil", () => {
     expect(() => segmentsFromSilences([], [], { ...opts, minGap: 0.2 })).toThrow(/padding/);
   });
