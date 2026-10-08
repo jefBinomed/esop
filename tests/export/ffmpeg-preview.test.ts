@@ -22,8 +22,8 @@ describe("planPreview", () => {
       { takeId: "b", start: 0, end: 2, framing: "serré", words: [] },
     ];
     expect(planPreview([take("a"), take("b")], segments, sizes, { width: 960 })).toEqual([
-      { input: "/rushs/a.mp4", start: 1, duration: 2.5, filter: "crop=1728:972:0:54,scale=960:540,setsar=1" },
-      { input: "/rushs/b.mp4", start: 0, duration: 2, filter: "crop=1128:634:204:223,scale=960:540,setsar=1" },
+      { input: "/rushs/a.mp4", start: 1, duration: 2.5, filter: "crop=1728:972:192:0,scale=960:540,setsar=1" },
+      { input: "/rushs/b.mp4", start: 0, duration: 2, filter: "crop=1128:634:722:137,scale=960:540,setsar=1" },
     ]);
   });
 

@@ -41,8 +41,8 @@ describe("applyFramingPattern", () => {
 });
 
 describe("cropRect", () => {
-  it("découpe une fenêtre paire recentrée à 40 % de la largeur", () => {
-    expect(cropRect(1920, 1080, "serré")).toEqual({ width: 1128, height: 634, x: 204, y: 223 });
+  it("découpe une fenêtre paire centrée sur le visage", () => {
+    expect(cropRect(1920, 1080, "serré")).toEqual({ width: 1128, height: 634, x: 722, y: 137 });
   });
 
   it("reste dans l'image quand le centre est près d'un bord", () => {

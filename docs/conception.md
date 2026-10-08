@@ -30,7 +30,7 @@ Observé dans `~/Desktop/EtSiOnParlait/` et dans les brouillons CapCut
 | Coupes à l'intérieur d'un même rush | 95 |
 | Silence conservé à chaque coupe | 0,17 à 0,3 s |
 | Changements de cadrage | 49, soit une coupe sur deux |
-| Cadrages | large `×1.0/1.11` et serré `×1.7`, décalés vers la droite |
+| Cadrages | large `×1.0/1.11` et serré `×1.7`, centrés sur le visage aux deux tiers de l'image |
 | B-roll | 22 segments sur 2 pistes, images à `×0.5`, clips plein cadre |
 | Textes | titres de chapitre, listes numérotées, « Abonnes toi », crédits |
 

@@ -2,9 +2,10 @@ import type { Framing } from "../domain/timeline.js";
 
 /**
  * Géométrie d'un cadrage : facteur de zoom et centre de la fenêtre visible,
- * en fraction de l'image source. Relevé sur les montages CapCut existants :
- * large ×1.11 et serré ×1.7, tous deux recentrés à 40 % de la largeur parce
- * que le sujet est assis légèrement à gauche du cadre.
+ * en fraction de l'image source. Facteurs relevés sur les montages CapCut
+ * (large ×1.11, serré ×1.7) ; centre mesuré sur la planche de vignettes du
+ * rush « imposteur », où le visage est aux deux tiers de la largeur et à 42 %
+ * de la hauteur. À rendre paramétrable par épisode si le plateau change.
  */
 export interface FramingGeometry {
   readonly scale: number;
@@ -13,8 +14,8 @@ export interface FramingGeometry {
 }
 
 export const FRAMINGS: Readonly<Record<Framing, FramingGeometry>> = {
-  large: { scale: 1.11, centerX: 0.4, centerY: 0.5 },
-  serré: { scale: 1.7, centerX: 0.4, centerY: 0.5 },
+  large: { scale: 1.11, centerX: 0.67, centerY: 0.42 },
+  serré: { scale: 1.7, centerX: 0.67, centerY: 0.42 },
 };
 
 export interface CropRect {
