@@ -6,6 +6,7 @@ import { segmentsFromSilences, DEFAULT_SEGMENT_OPTIONS } from "./cut/segments.js
 import type { Episode } from "./domain/episode.js";
 import type { Segment } from "./domain/timeline.js";
 import { ingestEpisode, readEpisode } from "./ingest/episode.js";
+import { renderContactSheet } from "./export/contact-sheet.js";
 import { planPreview, renderPreview } from "./export/ffmpeg-preview.js";
 import { serializeMontage } from "./montage/format.js";
 import { probeMedia } from "./ingest/probe.js";
@@ -19,6 +20,7 @@ const USAGE = `esop — assistant de montage « Et si on parlait »
       Découpe en segments de parole, pose les cadrages → <out>/montage.md
   esop preview [--out <dossier>] [--width 960]
       Coupe brute ffmpeg avec cadrages simulés → <out>/preview.mp4
+      et planche de vignettes toutes les 5 s → <out>/preview.png
 
 Par défaut, <out> vaut episodes/<nom-de-l-épisode>.
 `;
@@ -110,6 +112,12 @@ async function preview(argv: readonly string[]): Promise<void> {
   process.stderr.write(`rendu ffmpeg de ${episode.segments.filter((s) => s.dropped !== true).length} segments…\n`);
   await renderPreview(plan, output);
   process.stderr.write(`→ ${output}\n`);
+
+  const kept = episode.segments.filter((s) => s.dropped !== true);
+  const duration = kept.reduce((sum, s) => sum + s.end - s.start, 0);
+  const sheet = join(out, "preview.png");
+  await renderContactSheet(output, sheet, duration);
+  process.stderr.write(`→ ${sheet}\n`);
 }
 
 async function writeEpisode(out: string, episode: Episode): Promise<void> {
