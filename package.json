@@ -1,0 +1,26 @@
+{
+  "name": "esop",
+  "version": "0.1.0",
+  "description": "Assistant de montage pour la chaîne YouTube « Et si on parlait » : transcription, coupes, cadrages et rendu Remotion à partir d'une transcription annotée.",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
+  "bin": {
+    "esop": "./src/cli.ts"
+  },
+  "scripts": {
+    "esop": "tsx src/cli.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.1",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.3"
+  }
+}
