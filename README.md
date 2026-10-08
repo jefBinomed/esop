@@ -26,13 +26,24 @@ npm test
 ## Utilisation
 
 ```sh
-npm run esop -- ingest <dossier-épisode>   # transcrit toutes les prises
-npm run esop -- takes                       # évalue les prises par chapitre
-npm run esop -- cut                         # coupe silences et hésitations
-npm run esop -- preview                     # rendu 540p de relecture
+npm run esop -- ingest <dossier-épisode>     # transcrit les prises, détecte les silences
+npm run esop -- ingest <dossier> --file x.mp4 # un rush hors convention de nommage
+npm run esop -- cut                           # segments de parole + cadrages → montage.md
+npm run esop -- preview                       # coupe brute 960×540 + planche de vignettes
 ```
 
-Les commandes arrivent au fil des versions décrites dans la conception.
+Les résultats vont dans `episodes/<nom>/` (ignoré par git) :
+
+- `episode.json` : prises, mots horodatés, silences, segments.
+- `montage.md` : la transcription annotée à relire. Barrer une ligne la coupe,
+  `(serré)` ou `(large)` force un cadrage.
+- `preview.mp4` et `preview.png` : la coupe brute et sa planche de vignettes.
+
+Ordres de grandeur sur un rush de 8 min : 2 min de transcription, 2 min de
+rendu de prévisualisation.
+
+Les commandes suivantes (`takes`, `render` par Remotion) arrivent au fil des
+versions décrites dans la conception.
 
 ## Licence
 

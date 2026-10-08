@@ -254,7 +254,7 @@ Tout est dans `theme.ts` et les calques, donc partagé par les épisodes.
 
 ## 8. Plan de livraison
 
-1. **V0, une soirée** : `ingest` + `takes` + `cut` + `preview`. Transcription
+1. **V0, livrée le 2026-10-08 sauf `takes`** : `ingest` + `cut` + `preview`. Transcription
    de toutes les prises, évaluation, coupes, un calque `Talk` minimal
    reproduisant l'alternance large/serré. Tu valides le dérushage de
    « Conclusion » en comparant avec ta version CapCut. Aucun épisode n'a
