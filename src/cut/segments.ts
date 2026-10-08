@@ -22,8 +22,9 @@ export const DEFAULT_SEGMENT_OPTIONS = { minGap: 0.35, padding: 0.12 } as const;
  * Découpe un rush en segments de parole à partir des silences détectés dans
  * l'audio. Les silences plus courts que `minGap` sont ignorés ; les autres
  * deviennent des coupes, avec `padding` de respiration conservé de chaque
- * côté. Les mots sont rattachés au segment qui contient leur milieu, car
- * whisper étale volontiers un mot sur le silence qui le suit.
+ * côté. Les horodatages whisper étant approximatifs, chaque mot est rattaché
+ * au segment qu'il recouvre le plus, et à défaut au segment le plus proche :
+ * aucun mot n'est perdu.
  */
 export function segmentsFromSilences(
   silences: readonly Span[],
@@ -48,23 +49,42 @@ export function segmentsFromSilences(
   }
   pushSpeech(speech, cursor, opts.duration, opts);
 
+  const attached: Word[][] = speech.map(() => []);
+  for (const word of words) {
+    const index = bestSpanIndex(speech, word);
+    if (index !== undefined) attached[index]?.push(word);
+  }
+
   return speech
-    .map((span) => ({
-      takeId: opts.takeId,
-      start: span.start,
-      end: span.end,
-      words: words.filter((w) => contains(span, (w.start + w.end) / 2)),
-    }))
+    .map((span, i) => ({ takeId: opts.takeId, start: span.start, end: span.end, words: attached[i] ?? [] }))
     .filter((segment) => segment.words.length > 0);
+}
+
+/** Segment de plus grand recouvrement avec le mot, sinon le plus proche. */
+function bestSpanIndex(spans: readonly Span[], word: Word): number | undefined {
+  let best: number | undefined;
+  let bestOverlap = 0;
+  let nearest: number | undefined;
+  let nearestDistance = Number.POSITIVE_INFINITY;
+
+  spans.forEach((span, i) => {
+    const overlap = Math.min(span.end, word.end) - Math.max(span.start, word.start);
+    if (overlap > bestOverlap) {
+      best = i;
+      bestOverlap = overlap;
+    }
+    const distance = word.end <= span.start ? span.start - word.end : word.start - span.end;
+    if (distance < nearestDistance) {
+      nearest = i;
+      nearestDistance = distance;
+    }
+  });
+  return best ?? nearest;
 }
 
 function pushSpeech(target: Span[], start: number, end: number, opts: SegmentOptions): void {
   const span = { start: round(Math.max(0, start)), end: round(Math.min(opts.duration, end)) };
   if (ms(span.end - span.start) > 0) target.push(span);
-}
-
-function contains(span: Span, t: number): boolean {
-  return t >= span.start && t < span.end;
 }
 
 /**

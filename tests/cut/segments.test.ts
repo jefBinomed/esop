@@ -37,12 +37,17 @@ describe("segmentsFromSilences", () => {
     expect(segments).toEqual([{ takeId: "t1", start: 2.38, end: 4.32, words }]);
   });
 
-  it("rattache un mot au segment qui contient son milieu", () => {
-    // whisper étale souvent un mot sur le silence qui le suit : le milieu
-    // du mot reste du bon côté de la coupe.
+  it("rattache un mot au segment qu'il recouvre le plus", () => {
+    // whisper étale souvent un mot sur le silence qui le suit.
     const words = [w("a", 1, 2.6), w("b", 5, 6)];
     const segments = segmentsFromSilences([s(2.0, 4.8)], words, opts);
     expect(segments.map((x) => x.words.map((y) => y.text))).toEqual([["a"], ["b"]]);
+  });
+
+  it("rattache un mot tombé dans un silence au segment le plus proche", () => {
+    const words = [w("a", 1, 2), w("x", 3.0, 3.5), w("b", 5, 6)];
+    const segments = segmentsFromSilences([s(2.0, 4.8)], words, opts);
+    expect(segments.map((x) => x.words.map((y) => y.text))).toEqual([["a", "x"], ["b"]]);
   });
 
   it("supprime un segment de parole sans aucun mot", () => {
