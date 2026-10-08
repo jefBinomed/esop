@@ -44,6 +44,8 @@ export interface Segment extends Span {
   readonly framing?: Framing;
   readonly dropped?: boolean;
   readonly reason?: string;
+  /** Annotations libres `{clé: valeur}` posées dans montage.md pour les calques. */
+  readonly annotations?: readonly string[];
 }
 
 export function spanDuration(span: Span): number {
