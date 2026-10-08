@@ -7,7 +7,7 @@ import type { Episode } from "./domain/episode.js";
 import type { Segment } from "./domain/timeline.js";
 import { ingestEpisode, readEpisode } from "./ingest/episode.js";
 import { renderContactSheet } from "./export/contact-sheet.js";
-import { planPreview, renderPreview } from "./export/ffmpeg-preview.js";
+import { DEFAULT_PREVIEW_OPTIONS, planPreview, renderPreview } from "./export/ffmpeg-preview.js";
 import { serializeMontage } from "./montage/format.js";
 import { probeMedia } from "./ingest/probe.js";
 import { applyFramingPattern } from "./zoom/pattern.js";
@@ -107,11 +107,12 @@ async function preview(argv: readonly string[]): Promise<void> {
     const info = await probeMedia(take.file);
     sizes[take.id] = { width: info.width, height: info.height };
   }
-  const plan = planPreview(episode.takes, episode.segments, sizes, { width: Number(values.width ?? 960) });
+  const jobs = planPreview(episode.takes, episode.segments, sizes, { width: Number(values.width ?? 960) });
   const output = join(out, "preview.mp4");
-  process.stderr.write(`rendu ffmpeg de ${episode.segments.filter((s) => s.dropped !== true).length} segments…\n`);
-  await renderPreview(plan, output);
-  process.stderr.write(`→ ${output}\n`);
+  await renderPreview(jobs, output, DEFAULT_PREVIEW_OPTIONS, (done, total) => {
+    process.stderr.write(`\rextraction ${done}/${total}`);
+  });
+  process.stderr.write(`\n→ ${output}\n`);
 
   const kept = episode.segments.filter((s) => s.dropped !== true);
   const duration = kept.reduce((sum, s) => sum + s.end - s.start, 0);
