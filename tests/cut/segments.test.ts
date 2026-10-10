@@ -68,7 +68,25 @@ describe("segmentsFromSilences", () => {
     expect(segments).toEqual([{ takeId: "t1", start: 0, end: 60, words }]);
   });
 
+  it("rattache l'amorce d'une nouvelle phrase tombée dans un silence au segment suivant", () => {
+    const words = [w("fin.", 1, 2), w("On", 2.2, 2.3), w("continue", 5, 6)];
+    const segments = segmentsFromSilences([s(2.0, 4.8)], words, opts);
+    expect(segments.map((x) => x.words.map((y) => y.text))).toEqual([["fin."], ["On", "continue"]]);
+  });
+
+  it("ignore les micro-bruits entre deux longs silences sans avaler la pause", () => {
+    const words = [w("fin", 1, 2), w("En", 10.1, 10.3), w("conclusion", 10.4, 11.5)];
+    // Micro-clic de 10 ms à 5.00→5.01 et respiration de 150 ms à 6.50→6.65 au milieu d'une pause de 8 s
+    const silences = [s(2.0, 5.0), s(5.01, 6.5), s(6.65, 10.0)];
+    const segments = segmentsFromSilences(silences, words, { ...opts, minSegment: 0.5 });
+    expect(segments).toEqual([
+      { takeId: "t1", start: 0, end: 2.12, words: [words[0]] },
+      { takeId: "t1", start: 9.88, end: 60, words: [words[1], words[2]] },
+    ]);
+  });
+
   it("refuse une marge qui dépasserait le demi-seuil", () => {
     expect(() => segmentsFromSilences([], [], { ...opts, minGap: 0.2 })).toThrow(/padding/);
   });
 });
+

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseMontage, serializeMontage } from "../../src/montage/format.js";
+import { mergeMontageEdits, parseMontage, segmentsFromMontage, serializeMontage } from "../../src/montage/format.js";
 import { formatTimecode, parseTimecode } from "../../src/montage/timecode.js";
 import type { Segment, Take, Word } from "../../src/domain/timeline.js";
 
@@ -73,3 +73,53 @@ describe("parseMontage", () => {
     expect(doc.lines).toHaveLength(1);
   });
 });
+
+describe("segmentsFromMontage", () => {
+  it("reconstruit les segments depuis montage.md en rattachant les mots de la prise", () => {
+    const takesWithWords: Take[] = [
+      { ...takes[0]!, words: [w("Lundi", 0.5, 0.9), w("soir,", 1, 1.4), w("Votre", 9.3, 9.6)] },
+      { ...takes[1]!, words: [w("Et", 0.4, 0.5)] },
+    ];
+    const doc = parseMontage(expected);
+    expect(segmentsFromMontage(doc, takesWithWords)).toEqual([
+      { takeId: "00-hook-1.2", start: 0.47, end: 8.09, words: [w("Lundi", 0.5, 0.9), w("soir,", 1, 1.4)] },
+      { takeId: "00-hook-1.2", start: 9.27, end: 13.55, framing: "serré", words: [w("Votre", 9.3, 9.6)] },
+      {
+        takeId: "02-Probleme-1.2",
+        start: 0.3,
+        end: 4.9,
+        dropped: true,
+        annotations: ["broll: sac.mp4"],
+        words: [w("Et", 0.4, 0.5)],
+      },
+    ]);
+  });
+
+  it("refuse une ligne dont la prise est inconnue", () => {
+    const doc = parseMontage("[inconnue 00:00.000→00:01.000] texte\n");
+    expect(() => segmentsFromMontage(doc, takes)).toThrow(/prise inconnue/);
+  });
+});
+
+describe("mergeMontageEdits", () => {
+  it("préserve les coupes barrées et les annotations lors d'un nouveau cut", () => {
+    const fresh: Segment[] = [
+      { takeId: "00-hook-1.2", start: 0.47, end: 8.09, words: [w("Lundi", 0.5, 0.9)] },
+      { takeId: "02-Probleme-1.2", start: 0.3, end: 4.9, words: [w("Et", 0.4, 0.5)] },
+    ];
+    const doc = parseMontage(expected);
+    expect(mergeMontageEdits(fresh, doc)).toEqual([
+      { takeId: "00-hook-1.2", start: 0.47, end: 8.09, words: [w("Lundi", 0.5, 0.9)] },
+      {
+        takeId: "02-Probleme-1.2",
+        start: 0.3,
+        end: 4.9,
+        dropped: true,
+        annotations: ["broll: sac.mp4"],
+        words: [w("Et", 0.4, 0.5)],
+      },
+    ]);
+  });
+});
+
+

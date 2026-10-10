@@ -254,14 +254,13 @@ Tout est dans `theme.ts` et les calques, donc partagé par les épisodes.
 
 ## 8. Plan de livraison
 
-1. **V0, livrée le 2026-10-08 sauf `takes`** : `ingest` + `cut` + `preview`. Transcription
-   de toutes les prises, évaluation, coupes, un calque `Talk` minimal
-   reproduisant l'alternance large/serré. Tu valides le dérushage de
-   « Conclusion » en comparant avec ta version CapCut. Aucun épisode n'a
-   conservé ses prises nommées ; pour développer, le rush brut
-   `imposteur/PXL_20250412_164129863.mp4` (1,2 Go, une seule prise) sert de
-   jeu d'essai pour la transcription et les coupes. La vraie V0 se joue sur le
-   prochain épisode tourné, prises conservées cette fois.
+1. **V0, livrée** : `ingest` + `takes` + `cut` + `preview` (avec synchronisation
+   bidirectionnelle de `montage.md` et pré-remplissage depuis `script.md`).
+   Transcription de toutes les prises, évaluation, coupes, recadrage alterné
+   large/serré. Aucun ancien épisode n'ayant conservé ses prises nommées, le
+   rush brut `imposteur/PXL_20250412_164129863.mp4` (1,2 Go, une seule prise)
+   sert de jeu d'essai dérushé et validé sur planche de vignettes ; l'arbitrage
+   multi-prises (`takes.md`) se jouera sur le prochain épisode tourné.
 2. **V1, le style actuel** : chapitres, jingle, B-roll annoté, textes,
    musique avec ducking. Objectif : « Conclusion » rendue par Remotion
    indiscernable de ta version, puis mieux.

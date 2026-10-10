@@ -18,7 +18,13 @@ export interface SegmentOptions {
  * reproduit son rythme (125 segments contre 132, médiane 2,8 s), 0,12 s de
  * respiration correspond aux 0,17 à 0,3 s conservés après coupe.
  */
-export const DEFAULT_SEGMENT_OPTIONS = { minGap: 0.35, padding: 0.12, minSegment: 0.5 } as const;
+export const DEFAULT_SEGMENT_OPTIONS = {
+  minGap: 0.35,
+  padding: 0.12,
+  minSegment: 0.5,
+  minSpeech: 0.14,
+  maxMergeGap: 0.8,
+} as const;
 
 /**
  * Découpe un rush en segments de parole à partir des silences détectés dans
@@ -27,7 +33,7 @@ export const DEFAULT_SEGMENT_OPTIONS = { minGap: 0.35, padding: 0.12, minSegment
  * côté. Les horodatages whisper étant approximatifs, chaque mot est rattaché
  * au segment qu'il recouvre le plus, et à défaut au segment le plus proche :
  * aucun mot n'est perdu. Un segment plus court que `minSegment` (un mot
- * isolé avant une pause) est fusionné avec le suivant, silence compris.
+ * isolé avant une pause courte) est fusionné avec le suivant, silence compris.
  */
 export function segmentsFromSilences(
   silences: readonly Span[],
@@ -45,20 +51,28 @@ export function segmentsFromSilences(
     .sort((a, b) => a.start - b.start);
 
   // `cursor` est la fin brute du silence précédent : il n'y a de parole que
-  // si le silence suivant commence après. Les marges s'ajoutent ensuite.
+  // si l'intervalle avant le silence suivant dépasse un micro-bruit (clic, souffle).
   const speech: Span[] = [];
   let cursor = 0;
   for (const cut of cuts) {
-    if (cut.start > cursor) pushSpeech(speech, cursor - opts.padding, cut.start + opts.padding, opts);
+    if (ms(cut.start - cursor) >= ms(DEFAULT_SEGMENT_OPTIONS.minSpeech)) {
+      pushSpeech(speech, cursor - opts.padding, cut.start + opts.padding, opts);
+    }
     cursor = Math.max(cursor, cut.end);
   }
-  if (opts.duration > cursor) pushSpeech(speech, cursor - opts.padding, opts.duration, opts);
+  if (ms(opts.duration - cursor) >= ms(DEFAULT_SEGMENT_OPTIONS.minSpeech)) {
+    pushSpeech(speech, cursor - opts.padding, opts.duration, opts);
+  }
   const merged = mergeShort(speech, opts.minSegment ?? DEFAULT_SEGMENT_OPTIONS.minSegment);
 
   const attached: Word[][] = merged.map(() => []);
+  let lastIndex = 0;
   for (const word of words) {
-    const index = bestSpanIndex(merged, word);
-    if (index !== undefined) attached[index]?.push(word);
+    const index = resolveSpanIndex(merged, attached, word, lastIndex);
+    if (index !== undefined) {
+      attached[index]?.push(word);
+      lastIndex = index;
+    }
   }
 
   return merged
@@ -66,12 +80,18 @@ export function segmentsFromSilences(
     .filter((segment) => segment.words.length > 0);
 }
 
-/** Fusionne chaque intervalle trop court avec le suivant, ou le précédent pour le dernier. */
+/**
+ * Fusionne chaque intervalle trop court avec le suivant si la pause qui les
+ * sépare reste brève (`maxMergeGap`), sinon l'écarte comme souffle isolé.
+ */
 function mergeShort(spans: readonly Span[], minSegment: number): Span[] {
   const out: Span[] = [];
   let pending: Span | undefined;
   for (const span of spans) {
-    const current = pending === undefined ? span : { start: pending.start, end: span.end };
+    const current =
+      pending !== undefined && ms(span.start - pending.end) < ms(DEFAULT_SEGMENT_OPTIONS.maxMergeGap)
+        ? { start: pending.start, end: span.end }
+        : span;
     pending = undefined;
     if (ms(current.end - current.start) < ms(minSegment)) {
       pending = current;
@@ -86,18 +106,33 @@ function mergeShort(spans: readonly Span[], minSegment: number): Span[] {
   return out;
 }
 
-/** Segment de plus grand recouvrement avec le mot, sinon le plus proche. */
-function bestSpanIndex(spans: readonly Span[], word: Word): number | undefined {
+const END_OF_SENTENCE = /[.?!…]$/;
+const STARTS_UPPER = /^\p{Lu}/u;
+
+/**
+ * Segment de plus grand recouvrement avec le mot, sinon le plus proche.
+ * Quand whisper place le début d'une nouvelle phrase (majuscule ou après une
+ * ponctuation finale) dans le silence qui la précède, on le rattache au
+ * segment suivant pour ne pas laisser l'amorce sur la fin du plan précédent.
+ */
+function resolveSpanIndex(
+  spans: readonly Span[],
+  attached: readonly (readonly Word[])[],
+  word: Word,
+  lastIndex: number,
+): number | undefined {
   let best: number | undefined;
-  let bestOverlap = 0;
+  let bestOverlap = -1;
   let nearest: number | undefined;
   let nearestDistance = Number.POSITIVE_INFINITY;
 
   spans.forEach((span, i) => {
-    const overlap = Math.min(span.end, word.end) - Math.max(span.start, word.start);
-    if (overlap > bestOverlap) {
-      best = i;
-      bestOverlap = overlap;
+    if (word.end >= span.start && word.start <= span.end) {
+      const overlap = Math.min(span.end, word.end) - Math.max(span.start, word.start);
+      if (overlap > bestOverlap) {
+        best = i;
+        bestOverlap = overlap;
+      }
     }
     const distance = word.end <= span.start ? span.start - word.end : word.start - span.end;
     if (distance < nearestDistance) {
@@ -105,7 +140,19 @@ function bestSpanIndex(spans: readonly Span[], word: Word): number | undefined {
       nearestDistance = distance;
     }
   });
-  return best ?? nearest;
+
+  const idx = best ?? nearest;
+  if (best === undefined && idx !== undefined && idx + 1 < spans.length) {
+    const span = spans[idx];
+    if (span !== undefined && word.start >= span.end) {
+      const prevWords = attached[idx] ?? [];
+      const prevLast = prevWords[prevWords.length - 1]?.text ?? "";
+      if (idx < lastIndex || END_OF_SENTENCE.test(prevLast) || STARTS_UPPER.test(word.text)) {
+        return idx + 1;
+      }
+    }
+  }
+  return idx;
 }
 
 function pushSpeech(target: Span[], start: number, end: number, opts: SegmentOptions): void {

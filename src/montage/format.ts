@@ -112,3 +112,62 @@ function parseRest(takeId: string, start: number, end: number, rest: string): Mo
   };
   return framing === undefined ? line : { ...line, framing };
 }
+
+/**
+ * Reconstruit les segments depuis un `montage.md` relu, en réassociant les
+ * mots horodatés de chaque prise (ou du découpage précédent quand les bornes
+ * sont inchangées).
+ */
+export function segmentsFromMontage(
+  doc: MontageDoc,
+  takes: readonly Take[],
+  previous: readonly Segment[] = [],
+): Segment[] {
+  const takesById = new Map(takes.map((t) => [t.id, t]));
+  const prevByKey = new Map(previous.map((s) => [`${s.takeId}:${s.start}:${s.end}`, s]));
+
+  return doc.lines.map((line) => {
+    const take = takesById.get(line.takeId);
+    if (take === undefined) throw new Error(`prise inconnue : ${line.takeId}`);
+    const prev = prevByKey.get(`${line.takeId}:${line.start}:${line.end}`);
+    const words =
+      prev?.words ??
+      take.words.filter(
+        (w) =>
+          w.end >= line.start &&
+          w.start <= line.end &&
+          (w.start === w.end || Math.min(line.end, w.end) > Math.max(line.start, w.start)),
+      );
+
+    return {
+      takeId: line.takeId,
+      start: line.start,
+      end: line.end,
+      words,
+      ...(line.dropped ? { dropped: true } : {}),
+      ...(!line.dropped && line.framing !== undefined ? { framing: line.framing } : {}),
+      ...(line.annotations.length > 0 ? { annotations: line.annotations } : {}),
+    };
+  });
+}
+
+/**
+ * Reporte les coupes barrées (`~~...~~`) et les annotations `{...}` d'un
+ * `montage.md` existant sur un nouveau découpage par timecode.
+ */
+export function mergeMontageEdits(segments: readonly Segment[], doc: MontageDoc): Segment[] {
+  return segments.map((segment) => {
+    const match = doc.lines.find(
+      (line) =>
+        line.takeId === segment.takeId &&
+        Math.min(line.end, segment.end) > Math.max(line.start, segment.start),
+    );
+    if (match === undefined) return segment;
+    return {
+      ...segment,
+      ...(match.dropped ? { dropped: true } : {}),
+      ...(match.annotations.length > 0 ? { annotations: match.annotations } : {}),
+    };
+  });
+}
+

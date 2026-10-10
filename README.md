@@ -28,22 +28,23 @@ npm test
 ```sh
 npm run esop -- ingest <dossier-épisode>     # transcrit les prises, détecte les silences
 npm run esop -- ingest <dossier> --file x.mp4 # un rush hors convention de nommage
-npm run esop -- cut                           # segments de parole + cadrages → montage.md
+npm run esop -- takes                         # évalue les prises par chapitre → takes.md
+npm run esop -- cut                           # segments + cadrages + script.md → montage.md
 npm run esop -- preview                       # coupe brute 960×540 + planche de vignettes
 ```
 
 Les résultats vont dans `episodes/<nom>/` (ignoré par git) :
 
 - `episode.json` : prises, mots horodatés, silences, segments.
-- `montage.md` : la transcription annotée à relire. Barrer une ligne la coupe,
-  `(serré)` ou `(large)` force un cadrage.
-- `preview.mp4` et `preview.png` : la coupe brute et sa planche de vignettes.
+- `takes.md` : évaluation des prises par chapitre (durée, hésitations, couverture de `script.md`) avec case `[x]` sur la prise recommandée.
+- `montage.md` : la transcription annotée à relire. Barrer une ligne (`~~...~~`) la coupe, `(serré)` ou `(large)` force un cadrage, `{texte: …}` et `{mot: …}` viennent de `script.md`.
+- `preview.mp4` et `preview.png` : la coupe brute synchronisée avec `montage.md` et sa planche de vignettes.
 
 Ordres de grandeur sur un rush de 8 min : 2 min de transcription, 2 min de
 rendu de prévisualisation.
 
-Les commandes suivantes (`takes`, `render` par Remotion) arrivent au fil des
-versions décrites dans la conception.
+La commande suivante (`render` / `studio` par Remotion) arrive en V1 décrite
+dans la conception.
 
 ## Licence
 
