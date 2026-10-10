@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cropRect } from "../../src/zoom/framing.js";
+import { cropRect, framingTransform } from "../../src/zoom/framing.js";
 import { applyFramingPattern } from "../../src/zoom/pattern.js";
 import type { Segment } from "../../src/domain/timeline.js";
 
@@ -50,5 +50,13 @@ describe("cropRect", () => {
     expect(rect.x).toBeGreaterThanOrEqual(0);
     expect(rect.x + rect.width).toBeLessThanOrEqual(1920);
     expect(rect.y + rect.height).toBeLessThanOrEqual(1080);
+  });
+
+  it("calcule la transformation CSS équivalente à cropRect pour Remotion", () => {
+    const rect = cropRect(1920, 1080, "serré");
+    const tr = framingTransform("serré", 1);
+    expect(tr.scale).toBeCloseTo(1.7, 4);
+    expect(tr.translateXPercent).toBeCloseTo((-rect.x / 1920) * 100, 0);
+    expect(tr.translateYPercent).toBeCloseTo((-rect.y / 1080) * 100, 0);
   });
 });

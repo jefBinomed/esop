@@ -39,6 +39,30 @@ export function cropRect(width: number, height: number, framing: Framing): CropR
   return { width: w, height: h, x, y };
 }
 
+export interface FramingTransform {
+  readonly scale: number;
+  readonly translateXPercent: number;
+  readonly translateYPercent: number;
+}
+
+/**
+ * Calcule la transformation CSS (`transformOrigin: "0 0"`,
+ * `transform: scale(scale) translate(translateXPercent%, translateYPercent%)`)
+ * reproduisant exactement la fenêtre `cropRect` centrée sur `(centerX, centerY)`.
+ */
+export function framingTransform(framing: Framing, zoomFactor = 1): FramingTransform {
+  const geometry = FRAMINGS[framing];
+  const scale = geometry.scale * zoomFactor;
+  const windowFraction = 1 / scale;
+  const x0 = clamp(geometry.centerX - windowFraction / 2, 0, 1 - windowFraction);
+  const y0 = clamp(geometry.centerY - windowFraction / 2, 0, 1 - windowFraction);
+  return {
+    scale,
+    translateXPercent: -x0 * 100,
+    translateYPercent: -y0 * 100,
+  };
+}
+
 function even(value: number): number {
   return Math.floor(value / 2) * 2;
 }

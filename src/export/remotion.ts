@@ -1,14 +1,14 @@
 import { spawn } from "node:child_process";
-import { access, mkdir, rm, symlink } from "node:fs/promises";
+import { access, copyFile, mkdir, rm, symlink } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import type { Episode } from "../domain/episode.js";
 
 /**
- * Prépare le dossier `public/` de Remotion exclusivement avec des liens
- * symboliques afin de ne jamais dupliquer les rushs lourds :
- * - `public/episode.json` → `<episodeDir>/episode.json`
- * - `public/rushs` → `episode.sourceDir`
- * - `public/resources` → `resourcesDir` ou `<parent de sourceDir>/Ressources` (si présent)
+ * Prépare le dossier `public/` de Remotion sans jamais dupliquer les rushs lourds :
+ * - `public/episode.json` : copie du fichier JSON léger (requis car `serveHandler` de
+ *   `@remotion/renderer` renvoie 404 si la feuille finale d'une URL est un symlink)
+ * - `public/rushs` → symlink de dossier vers `episode.sourceDir`
+ * - `public/resources` → symlink de dossier vers `resourcesDir` ou `<parent de sourceDir>/Ressources` (si présent)
  */
 export async function preparePublicDir(
   publicDir: string,
@@ -19,13 +19,15 @@ export async function preparePublicDir(
   await mkdir(publicDir, { recursive: true });
 
   const episodeJsonTarget = resolve(episodeDir, "episode.json");
+  const episodeJsonDest = join(publicDir, "episode.json");
   const rushsTarget = resolve(episode.sourceDir);
   const candidateResources =
     resourcesDir !== undefined
       ? resolve(resourcesDir)
       : join(dirname(rushsTarget), "Ressources");
 
-  await replaceSymlink(episodeJsonTarget, join(publicDir, "episode.json"), "file");
+  await rm(episodeJsonDest, { force: true });
+  await copyFile(episodeJsonTarget, episodeJsonDest);
   await replaceSymlink(rushsTarget, join(publicDir, "rushs"), "dir");
 
   const resourcesDest = join(publicDir, "resources");

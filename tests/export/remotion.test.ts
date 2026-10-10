@@ -11,7 +11,7 @@ import {
 } from "../../src/export/remotion.js";
 
 describe("export/remotion", () => {
-  it("crée des liens symboliques dans publicDir vers episode.json, rushs et Ressources (idempotent)", async () => {
+  it("copie episode.json en fichier régulier et crée des symlinks de dossiers pour rushs et Ressources (idempotent)", async () => {
     const root = await mkdtemp(join(tmpdir(), "esop-remotion-test-"));
     try {
       const sourceParent = join(root, "Desktop", "EtSiOnParlait");
@@ -23,7 +23,7 @@ describe("export/remotion", () => {
       await mkdir(sourceDir, { recursive: true });
       await mkdir(resourcesDir, { recursive: true });
       await mkdir(episodeDir, { recursive: true });
-      await writeFile(join(episodeDir, "episode.json"), "{}", "utf8");
+      await writeFile(join(episodeDir, "episode.json"), '{"name":"conclusion"}', "utf8");
 
       const episode: Episode = {
         name: "conclusion",
@@ -36,15 +36,16 @@ describe("export/remotion", () => {
       await preparePublicDir(publicDir, episodeDir, episode);
       await preparePublicDir(publicDir, episodeDir, episode);
 
-      const epLink = join(publicDir, "episode.json");
+      const epFile = join(publicDir, "episode.json");
       const rushsLink = join(publicDir, "rushs");
       const resLink = join(publicDir, "resources");
 
-      expect((await lstat(epLink)).isSymbolicLink()).toBe(true);
+      const epStat = await lstat(epFile);
+      expect(epStat.isFile()).toBe(true);
+      expect(epStat.isSymbolicLink()).toBe(false);
       expect((await lstat(rushsLink)).isSymbolicLink()).toBe(true);
       expect((await lstat(resLink)).isSymbolicLink()).toBe(true);
 
-      expect(await readlink(epLink)).toBe(resolve(episodeDir, "episode.json"));
       expect(await readlink(rushsLink)).toBe(resolve(sourceDir));
       expect(await readlink(resLink)).toBe(resolve(resourcesDir));
     } finally {
@@ -72,7 +73,9 @@ describe("export/remotion", () => {
 
       await preparePublicDir(publicDir, episodeDir, episode);
 
-      expect((await lstat(join(publicDir, "episode.json"))).isSymbolicLink()).toBe(true);
+      const epStat = await lstat(join(publicDir, "episode.json"));
+      expect(epStat.isFile()).toBe(true);
+      expect(epStat.isSymbolicLink()).toBe(false);
       expect((await lstat(join(publicDir, "rushs"))).isSymbolicLink()).toBe(true);
       await expect(lstat(join(publicDir, "resources"))).rejects.toThrow();
     } finally {

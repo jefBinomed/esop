@@ -9,7 +9,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import type { TalkShot } from "../../src/timeline/compile.js";
-import { FRAMINGS } from "../../src/zoom/framing.js";
+import { framingTransform } from "../../src/zoom/framing.js";
 import { fileBasename, THEME } from "../theme.js";
 
 export interface TalkLayerProps {
@@ -23,7 +23,6 @@ interface ShotViewProps {
 const ShotView: React.FC<ShotViewProps> = ({ shot }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const geometry = FRAMINGS[shot.framing];
 
   const zoomFactor = interpolate(
     frame,
@@ -31,9 +30,10 @@ const ShotView: React.FC<ShotViewProps> = ({ shot }) => {
     [1, 1 + THEME.progressiveZoom],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
   );
-  const scale = geometry.scale * zoomFactor;
-  const originX = `${Math.round(geometry.centerX * 100)}%`;
-  const originY = `${Math.round(geometry.centerY * 100)}%`;
+  const { scale, translateXPercent, translateYPercent } = framingTransform(
+    shot.framing,
+    zoomFactor,
+  );
 
   return (
     <AbsoluteFill style={{ overflow: "hidden", backgroundColor: "#000" }}>
@@ -45,8 +45,8 @@ const ShotView: React.FC<ShotViewProps> = ({ shot }) => {
           width: "100%",
           height: "100%",
           objectFit: "cover",
-          transformOrigin: `${originX} ${originY}`,
-          transform: `scale(${scale.toFixed(4)})`,
+          transformOrigin: "0 0",
+          transform: `scale(${scale.toFixed(4)}) translate(${translateXPercent.toFixed(4)}%, ${translateYPercent.toFixed(4)}%)`,
         }}
       />
     </AbsoluteFill>
