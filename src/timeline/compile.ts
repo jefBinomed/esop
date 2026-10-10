@@ -1,5 +1,6 @@
 import type { Episode } from "../domain/episode.js";
 import type { Framing, Span, Take, Word } from "../domain/timeline.js";
+import { buildCaptionPages, type CaptionPage } from "./captions.js";
 
 /** Paramètres de compilation d'un épisode vers la timeline Remotion. */
 export interface CompileOptions {
@@ -92,6 +93,7 @@ export interface CompiledTimeline {
   readonly brolls: readonly BrollCue[];
   readonly texts: readonly TextCue[];
   readonly keywords: readonly KeywordCue[];
+  readonly captions: readonly CaptionPage[];
 }
 
 const VIDEO_EXT = /\.(mp4|mov|webm)$/i;
@@ -243,6 +245,7 @@ export function compileTimeline(episode: Episode, opts?: CompileOptions): Compil
 
   const duration = cursor;
   const durationInFrames = Math.round(duration * fps);
+  const captions = buildCaptionPages(shots, { fps });
 
   return {
     fps,
@@ -255,6 +258,7 @@ export function compileTimeline(episode: Episode, opts?: CompileOptions): Compil
     brolls,
     texts,
     keywords,
+    captions,
   };
 }
 

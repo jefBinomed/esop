@@ -3,6 +3,7 @@ import { AbsoluteFill } from "remotion";
 import type { Episode } from "../src/domain/episode.js";
 import { compileTimeline, type CompiledTimeline } from "../src/timeline/compile.js";
 import { BrollLayer } from "./layers/Broll.js";
+import { CaptionsLayer } from "./layers/Captions.js";
 import { ChapterLayer } from "./layers/Chapter.js";
 import { KeywordLayer } from "./layers/Keyword.js";
 import { MusicLayer } from "./layers/Music.js";
@@ -14,19 +15,22 @@ export type EpisodeProps = {
   readonly episode?: Episode;
   readonly hasMusic?: boolean;
   readonly musicSrc?: string;
+  readonly showCaptions?: boolean;
 };
 
 /**
  * Composition principale d'un épisode : empile les plans de parole (`TalkLayer`),
- * le B-roll (`BrollLayer`), les cartes de chapitre (`ChapterLayer`), les textes
- * et mots-clés (`KeywordLayer`), la musique avec ducking (`MusicLayer`) et un
- * vignettage léger pour la signature visuelle.
+ * le B-roll (`BrollLayer`), les sous-titres mot à mot (`CaptionsLayer`), les
+ * cartes de chapitre (`ChapterLayer`), les textes et mots-clés (`KeywordLayer`),
+ * la musique avec ducking (`MusicLayer`) et un vignettage léger pour la
+ * signature visuelle.
  */
 export const EpisodeComposition: React.FC<EpisodeProps> = ({
   timeline,
   episode,
   hasMusic = true,
   musicSrc = "rushs/funk-244706.mp3",
+  showCaptions = true,
 }) => {
   const activeTimeline = episode !== undefined ? compileTimeline(episode) : timeline;
 
@@ -34,6 +38,7 @@ export const EpisodeComposition: React.FC<EpisodeProps> = ({
     <AbsoluteFill style={{ backgroundColor: THEME.colors.background }}>
       <TalkLayer shots={activeTimeline.shots} />
       <BrollLayer brolls={activeTimeline.brolls} />
+      {showCaptions ? <CaptionsLayer captions={activeTimeline.captions} /> : null}
       <ChapterLayer chapters={activeTimeline.chapters} />
       <KeywordLayer texts={activeTimeline.texts} keywords={activeTimeline.keywords} />
       {hasMusic ? (

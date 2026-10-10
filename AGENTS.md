@@ -36,9 +36,9 @@ npm run esop -- studio [--out episodes/<nom>]
 - [`src/cut/`](src/cut/segments.ts) : Détection des silences audio via `ffmpeg silencedetect` (`silences.ts`) et découpage en segments avec marge de respiration et fusion des micro-segments (`segments.ts`).
 - [`src/zoom/`](src/zoom/pattern.ts) : Alternance des cadrages `large` (`×1.11`) / `serré` (`×1.7`) centrés sur le visage (`framing.ts`, `pattern.ts`).
 - [`src/montage/`](src/montage/format.ts) : Sérialisation, parsing et synchronisation de `montage.md` (`format.ts`, `timecode.ts`).
-- [`src/timeline/`](src/timeline/compile.ts) : Compilation d'un `Episode` en `CompiledTimeline` séquentielle pour Remotion (`compile.ts`) et calcul de l'enveloppe de ducking musical (`ducking.ts`).
+- [`src/timeline/`](src/timeline/compile.ts) : Compilation d'un `Episode` en `CompiledTimeline` séquentielle pour Remotion (`compile.ts`), découpage des sous-titres mot à mot (`captions.ts`) et calcul de l'enveloppe de ducking musical (`ducking.ts`).
 - [`src/export/`](src/export/ffmpeg-preview.ts) : Prévisualisation rapide par extraction parallèle de segments `ffmpeg` (`ffmpeg-preview.ts`), planche de vignettes horodatées (`contact-sheet.ts`), et préparation par liens symboliques / exécution du rendu Remotion (`remotion.ts`).
-- [`remotion/`](remotion/Episode.tsx) : Moteur de rendu habillé (`Root.tsx`, `Episode.tsx`, `theme.ts`) et calques (`layers/Talk.tsx`, `layers/Chapter.tsx`, `layers/Broll.tsx`, `layers/Keyword.tsx`, `layers/Music.tsx`).
+- [`remotion/`](remotion/Episode.tsx) : Moteur de rendu habillé (`Root.tsx`, `Episode.tsx`, `theme.ts`) et calques (`layers/Talk.tsx`, `layers/Captions.tsx`, `layers/Chapter.tsx`, `layers/Broll.tsx`, `layers/Keyword.tsx`, `layers/Music.tsx`).
 
 ## 4. Règles d'édition de `montage.md` (Rôle de l'Agent au montage)
 

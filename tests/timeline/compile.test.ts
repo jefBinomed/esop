@@ -101,6 +101,30 @@ describe("compileTimeline", () => {
       { text: "parti.", start: 7.4, end: 8.0, timelineStart: 3.4, timelineEnd: 4.0 },
     ]);
 
+    expect(timeline.captions).toEqual([
+      {
+        start: 0,
+        end: 1.2,
+        startFrame: 0,
+        durationInFrames: 36,
+        words: [
+          { text: "Bonjour", start: 1.0, end: 1.5, timelineStart: 0, timelineEnd: 0.5 },
+          { text: "à", start: 1.5, end: 1.7, timelineStart: 0.5, timelineEnd: 0.7 },
+          { text: "tous", start: 1.7, end: 2.2, timelineStart: 0.7, timelineEnd: 1.2 },
+        ],
+      },
+      {
+        start: 3.0,
+        end: 4.0,
+        startFrame: 90,
+        durationInFrames: 30,
+        words: [
+          { text: "C'est", start: 7.0, end: 7.4, timelineStart: 3.0, timelineEnd: 3.4 },
+          { text: "parti.", start: 7.4, end: 8.0, timelineStart: 3.4, timelineEnd: 4.0 },
+        ],
+      },
+    ]);
+
     expect(timeline.duration).toBe(5.0);
     expect(timeline.durationInFrames).toBe(150);
   });

@@ -13,6 +13,8 @@ export const THEME = {
   brollFadeFrames: 8,
   /** Amplitude du zoom Ken Burns sur les images B-roll (+5 %). */
   kenBurnsScale: 0.05,
+  /** Filtre d'étalonnage léger (signature visuelle homogène). */
+  colorGradingFilter: "contrast(1.04) saturate(1.08) brightness(1.01)",
   /** Paramètres du ducking musical sous la parole (−14 dB ≈ 0.2). */
   ducking: {
     fullVolume: 1.0,

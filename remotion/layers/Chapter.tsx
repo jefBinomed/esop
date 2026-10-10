@@ -1,6 +1,7 @@
 import type React from "react";
 import {
   AbsoluteFill,
+  Audio,
   Img,
   interpolate,
   Sequence,
@@ -47,6 +48,11 @@ const ChapterCard: React.FC<ChapterCardProps> = ({ cue }) => {
         fontFamily: THEME.fonts.heading,
       }}
     >
+      <Audio
+        src={staticFile("resources/intro-tv.mp4")}
+        volume={0.6}
+        endAt={cue.durationInFrames}
+      />
       <Img
         src={staticFile("resources/chapitre-bulle-vide.png")}
         style={{ width: "100%", height: "100%", objectFit: "cover" }}

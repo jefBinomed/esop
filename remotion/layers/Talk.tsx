@@ -54,6 +54,7 @@ const ShotView: React.FC<ShotViewProps> = ({ shot }) => {
           objectFit: "cover",
           transformOrigin: "0 0",
           transform: `scale(${scale.toFixed(4)}) translate(${translateXPercent.toFixed(4)}%, ${translateYPercent.toFixed(4)}%)`,
+          filter: THEME.colorGradingFilter,
         }}
       />
     </AbsoluteFill>

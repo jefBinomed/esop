@@ -189,6 +189,9 @@ src/
   zoom/pattern.ts            attribution des cadrages
   montage/parse.ts           montage.md → Timeline
   montage/serialize.ts       Timeline → montage.md (préserve les annotations)
+  timeline/compile.ts        Episode → CompiledTimeline séquentielle pour Remotion
+  timeline/captions.ts       TalkShot[] → pages de sous-titres mot à mot (3 mots max)
+  timeline/ducking.ts        enveloppe de ducking musical sous la parole
   export/ffmpeg-preview.ts   Timeline → graphe de filtres ffmpeg (coupe brute)
   cli.ts
 remotion/
@@ -197,7 +200,7 @@ remotion/
   layers/Talk.tsx            rushs via <OffthreadVideo trimBefore/trimAfter>, cadrage
   layers/Chapter.tsx         carte de chapitre animée + jingle
   layers/Broll.tsx           clips plein cadre, images en Ken Burns
-  layers/Captions.tsx        sous-titres mot à mot via @remotion/captions
+  layers/Captions.tsx        sous-titres mot à mot dynamiques (3 mots max, mot actif surligné)
   layers/Keyword.tsx         mot clé qui surgit en synchro avec la voix
   layers/Music.tsx           funk en boucle, ducking sous la parole
   theme.ts                   couleurs, polices, durées, courbes
@@ -261,11 +264,13 @@ Tout est dans `theme.ts` et les calques, donc partagé par les épisodes.
    rush brut `imposteur/PXL_20250412_164129863.mp4` (1,2 Go, une seule prise)
    sert de jeu d'essai dérushé et validé sur planche de vignettes ; l'arbitrage
    multi-prises (`takes.md`) se jouera sur le prochain épisode tourné.
-2. **V1, le style actuel** : chapitres, jingle, B-roll annoté, textes,
-   musique avec ducking. Objectif : « Conclusion » rendue par Remotion
-   indiscernable de ta version, puis mieux.
-3. **V2, le gain de beauté** : sous-titres mot à mot, mots clés, zoom
-   progressif, LUT.
+2. **V1, livrée (le style actuel)** : chapitres, jingle, B-roll annoté, textes,
+   musique avec ducking (`src/timeline/compile.ts`, `src/timeline/ducking.ts`,
+   `remotion/layers/Talk.tsx`, `Chapter.tsx`, `Broll.tsx`, `Keyword.tsx`, `Music.tsx`).
+3. **V2, livrée (le gain de beauté)** : sous-titres mot à mot dynamiques
+   (`src/timeline/captions.ts` + `remotion/layers/Captions.tsx`), mots clés,
+   zoom progressif (`+2 %`), étalonnage léger (`THEME.colorGradingFilter`) et
+   jingle sur les cartes de chapitre.
 4. **V3, optionnel** : placement de B-roll suggéré automatiquement, génération
    des shorts verticaux à partir du même `montage.md`.
 

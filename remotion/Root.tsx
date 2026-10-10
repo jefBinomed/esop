@@ -16,6 +16,7 @@ const EMPTY_TIMELINE: CompiledTimeline = {
   brolls: [],
   texts: [],
   keywords: [],
+  captions: [],
 };
 
 const DEFAULT_PROPS: EpisodeProps = {
