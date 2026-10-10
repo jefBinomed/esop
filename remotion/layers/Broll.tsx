@@ -7,9 +7,10 @@ import {
   Sequence,
   staticFile,
   useCurrentFrame,
+  useRemotionEnvironment,
 } from "remotion";
 import type { BrollCue } from "../../src/timeline/compile.js";
-import { fileBasename, THEME } from "../theme.js";
+import { fileBasename, studioSafeVideoSrc, THEME } from "../theme.js";
 
 export interface BrollLayerProps {
   readonly brolls: readonly BrollCue[];
@@ -21,6 +22,7 @@ interface BrollItemProps {
 
 const BrollItem: React.FC<BrollItemProps> = ({ cue }) => {
   const frame = useCurrentFrame();
+  const { isRendering } = useRemotionEnvironment();
   const opacity = interpolate(
     frame,
     [0, THEME.brollFadeFrames],
@@ -33,8 +35,10 @@ const BrollItem: React.FC<BrollItemProps> = ({ cue }) => {
     return (
       <AbsoluteFill style={{ opacity, backgroundColor: "#000" }}>
         <OffthreadVideo
-          src={src}
+          src={studioSafeVideoSrc(src, isRendering)}
           muted
+          pauseWhenBuffering
+          delayRenderTimeoutInMilliseconds={180_000}
           style={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
       </AbsoluteFill>
@@ -79,6 +83,7 @@ export const BrollLayer: React.FC<BrollLayerProps> = ({ brolls }) => {
           key={`broll-${cue.takeId}-${cue.startFrame}-${index}`}
           from={cue.startFrame}
           durationInFrames={cue.durationInFrames}
+          premountFor={THEME.fps}
         >
           <BrollItem cue={cue} />
         </Sequence>

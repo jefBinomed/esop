@@ -20,5 +20,4 @@ export function applyWebpackExtensionAlias(currentConfiguration: WebpackConfigur
 }
 
 Config.overrideWebpackConfig(applyWebpackExtensionAlias);
-
-
+Config.setDelayRenderTimeoutInMilliseconds(180_000);

@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { applyWebpackExtensionAlias } from "../../remotion.config.js";
+import { studioSafeVideoSrc } from "../../remotion/theme.js";
 import type { Episode } from "../../src/domain/episode.js";
 import {
   preparePublicDir,
@@ -116,6 +117,11 @@ describe("export/remotion", () => {
     expect(overridden.resolve?.extensionAlias).toEqual({
       ".js": [".ts", ".tsx", ".js", ".jsx"],
     });
+  });
+
+  it("neutralise le fragment média #t=start,end de Remotion en mode Studio mais garde l'URL brute en rendu", () => {
+    expect(studioSafeVideoSrc("/public/rushs/take.mp4", false)).toBe("/public/rushs/take.mp4#studio");
+    expect(studioSafeVideoSrc("/public/rushs/take.mp4", true)).toBe("/public/rushs/take.mp4");
   });
 });
 

@@ -6,11 +6,12 @@ import {
   Sequence,
   staticFile,
   useCurrentFrame,
+  useRemotionEnvironment,
   useVideoConfig,
 } from "remotion";
 import type { TalkShot } from "../../src/timeline/compile.js";
 import { framingTransform } from "../../src/zoom/framing.js";
-import { fileBasename, THEME } from "../theme.js";
+import { fileBasename, studioSafeVideoSrc, THEME } from "../theme.js";
 
 export interface TalkLayerProps {
   readonly shots: readonly TalkShot[];
@@ -23,6 +24,7 @@ interface ShotViewProps {
 const ShotView: React.FC<ShotViewProps> = ({ shot }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+  const { isRendering } = useRemotionEnvironment();
 
   const zoomFactor = interpolate(
     frame,
@@ -34,13 +36,18 @@ const ShotView: React.FC<ShotViewProps> = ({ shot }) => {
     shot.framing,
     zoomFactor,
   );
+  const videoSrc = studioSafeVideoSrc(
+    staticFile(`rushs/${fileBasename(shot.file)}`),
+    isRendering,
+  );
 
   return (
     <AbsoluteFill style={{ overflow: "hidden", backgroundColor: "#000" }}>
       <OffthreadVideo
-        src={staticFile(`rushs/${fileBasename(shot.file)}`)}
+        src={videoSrc}
         startFrom={Math.round(shot.trimBefore * fps)}
-        endAt={Math.round(shot.trimAfter * fps)}
+        pauseWhenBuffering
+        delayRenderTimeoutInMilliseconds={180_000}
         style={{
           width: "100%",
           height: "100%",
@@ -62,6 +69,7 @@ export const TalkLayer: React.FC<TalkLayerProps> = ({ shots }) => {
           key={`${shot.takeId}-${shot.startFrame}`}
           from={shot.startFrame}
           durationInFrames={shot.durationInFrames}
+          premountFor={THEME.fps}
         >
           <ShotView shot={shot} />
         </Sequence>

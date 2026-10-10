@@ -39,3 +39,20 @@ export function fileBasename(filePath: string): string {
   const parts = filePath.split(/[\\/]/);
   return parts.at(-1) ?? filePath;
 }
+
+/**
+ * En mode Studio/Player (`isRendering === false`), `VideoForPreview` de Remotion
+ * ajoute automatiquement `#t=start,end` en bornant `end` à la durée de la
+ * composition (`durationInFrames`). Or un rush brut est plus long que le
+ * montage coupé : dès que `trimBefore >= duration` de la composition, Remotion
+ * génère `#t=385,370.8` (`start > end`), ce qui met `<video>` en pause immédiate
+ * dans Chrome et déclenche une boucle de `play-and-seek` à 30 Hz (vidéo noire +
+ * grésillement audio). Ajouter un hash neutre `#studio` court-circuite
+ * `appendVideoFragment` tout en partageant le cache média entre tous les plans.
+ */
+export function studioSafeVideoSrc(assetUrl: string, isRendering: boolean): string {
+  if (isRendering || assetUrl.includes("#")) {
+    return assetUrl;
+  }
+  return `${assetUrl}#studio`;
+}
