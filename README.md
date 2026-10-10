@@ -31,6 +31,8 @@ npm run esop -- ingest <dossier> --file x.mp4 # un rush hors convention de nomma
 npm run esop -- takes                         # évalue les prises par chapitre → takes.md
 npm run esop -- cut                           # segments + cadrages + script.md → montage.md
 npm run esop -- preview                       # coupe brute 960×540 + planche de vignettes
+npm run esop -- render                        # rendu habillé Remotion 1080p30 → final.mp4
+npm run esop -- studio                        # ouvre le studio interactif Remotion
 ```
 
 Les résultats vont dans `episodes/<nom>/` (ignoré par git) :
@@ -39,12 +41,10 @@ Les résultats vont dans `episodes/<nom>/` (ignoré par git) :
 - `takes.md` : évaluation des prises par chapitre (durée, hésitations, couverture de `script.md`) avec case `[x]` sur la prise recommandée.
 - `montage.md` : la transcription annotée à relire. Barrer une ligne (`~~...~~`) la coupe, `(serré)` ou `(large)` force un cadrage, `{texte: …}` et `{mot: …}` viennent de `script.md`.
 - `preview.mp4` et `preview.png` : la coupe brute synchronisée avec `montage.md` et sa planche de vignettes.
+- `final.mp4` : la vidéo finale habillée (cartes de chapitre, B-roll, textes, mots-clés, ducking musical) rendue par Remotion.
 
 Ordres de grandeur sur un rush de 8 min : 2 min de transcription, 2 min de
 rendu de prévisualisation.
-
-La commande suivante (`render` / `studio` par Remotion) arrive en V1 décrite
-dans la conception.
 
 ## Licence
 

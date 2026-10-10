@@ -8,6 +8,7 @@ import type { Segment, Take } from "./domain/timeline.js";
 import { ingestEpisode, readEpisode } from "./ingest/episode.js";
 import { renderContactSheet } from "./export/contact-sheet.js";
 import { DEFAULT_PREVIEW_OPTIONS, planPreview, renderPreview } from "./export/ffmpeg-preview.js";
+import { preparePublicDir, runRemotionRender, runRemotionStudio } from "./export/remotion.js";
 import {
   mergeMontageEdits,
   parseMontage,
@@ -32,6 +33,10 @@ const USAGE = `esop — assistant de montage « Et si on parlait »
   esop preview [--out <dossier>] [--width 960]
       Coupe brute ffmpeg avec cadrages simulés → <out>/preview.mp4
       et planche de vignettes toutes les 5 s → <out>/preview.png
+  esop render [--out <dossier>] [--scale <facteur>]
+      Rendu habillé Remotion 1080p30 → <out>/final.mp4
+  esop studio [--out <dossier>]
+      Ouvre le studio interactif Remotion sur l'épisode
 
 Par défaut, <out> vaut episodes/<nom-de-l-épisode>.
 `;
@@ -47,6 +52,10 @@ export async function runCli(argv: readonly string[]): Promise<void> {
       return cut(rest);
     case "preview":
       return preview(rest);
+    case "render":
+      return render(rest);
+    case "studio":
+      return studio(rest);
     default:
       process.stdout.write(USAGE);
       process.exitCode = command === undefined || command === "help" ? 0 : 1;
@@ -145,16 +154,7 @@ async function preview(argv: readonly string[]): Promise<void> {
     options: { out: { type: "string" }, width: { type: "string" } },
   });
   const out = values.out ?? (await onlyEpisodeDir());
-  const episode = await readEpisode(join(out, "episode.json"));
-  if (episode === undefined) throw new Error(`episode.json introuvable dans ${out} : lance d'abord esop ingest`);
-
-  const montageDoc = await readMontage(join(out, "montage.md"));
-  const segments =
-    montageDoc !== undefined
-      ? applyFramingPattern(segmentsFromMontage(montageDoc, episode.takes, episode.segments))
-      : episode.segments;
-  if (segments === undefined) throw new Error(`pas de segments dans ${out} : lance d'abord esop cut`);
-  await writeEpisode(out, { ...episode, segments });
+  const { episode, segments } = await syncEpisodeFromMontage(out);
 
   const sizes: Record<string, { width: number; height: number }> = {};
   for (const take of episode.takes) {
@@ -173,6 +173,49 @@ async function preview(argv: readonly string[]): Promise<void> {
   const sheet = join(out, "preview.png");
   await renderContactSheet(output, sheet, duration);
   process.stderr.write(`→ ${sheet}\n`);
+}
+
+async function render(argv: readonly string[]): Promise<void> {
+  const { values } = parseArgs({
+    args: [...argv],
+    options: { out: { type: "string" }, scale: { type: "string" } },
+  });
+  const out = values.out ?? (await onlyEpisodeDir());
+  const { episode } = await syncEpisodeFromMontage(out);
+  const publicDir = "public";
+  await preparePublicDir(publicDir, out, episode);
+
+  const output = join(out, "final.mp4");
+  const scale = values.scale !== undefined ? Number(values.scale) : undefined;
+  await runRemotionRender("remotion/index.ts", output, publicDir, scale);
+  process.stderr.write(`→ ${output}\n`);
+}
+
+async function studio(argv: readonly string[]): Promise<void> {
+  const { values } = parseArgs({
+    args: [...argv],
+    options: { out: { type: "string" } },
+  });
+  const out = values.out ?? (await onlyEpisodeDir());
+  const { episode } = await syncEpisodeFromMontage(out);
+  const publicDir = "public";
+  await preparePublicDir(publicDir, out, episode);
+  await runRemotionStudio("remotion/index.ts", publicDir);
+}
+
+async function syncEpisodeFromMontage(out: string): Promise<{ episode: Episode; segments: readonly Segment[] }> {
+  const episode = await readEpisode(join(out, "episode.json"));
+  if (episode === undefined) throw new Error(`episode.json introuvable dans ${out} : lance d'abord esop ingest`);
+
+  const montageDoc = await readMontage(join(out, "montage.md"));
+  const segments =
+    montageDoc !== undefined
+      ? applyFramingPattern(segmentsFromMontage(montageDoc, episode.takes, episode.segments))
+      : episode.segments;
+  if (segments === undefined) throw new Error(`pas de segments dans ${out} : lance d'abord esop cut`);
+  const synced: Episode = { ...episode, segments };
+  await writeEpisode(out, synced);
+  return { episode: synced, segments };
 }
 
 async function readMontage(path: string): Promise<MontageDoc | undefined> {

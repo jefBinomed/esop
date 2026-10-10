@@ -1,0 +1,106 @@
+import { spawn } from "node:child_process";
+import { access, mkdir, rm, symlink } from "node:fs/promises";
+import { dirname, join, resolve } from "node:path";
+import type { Episode } from "../domain/episode.js";
+
+/**
+ * Prépare le dossier `public/` de Remotion exclusivement avec des liens
+ * symboliques afin de ne jamais dupliquer les rushs lourds :
+ * - `public/episode.json` → `<episodeDir>/episode.json`
+ * - `public/rushs` → `episode.sourceDir`
+ * - `public/resources` → `resourcesDir` ou `<parent de sourceDir>/Ressources` (si présent)
+ */
+export async function preparePublicDir(
+  publicDir: string,
+  episodeDir: string,
+  episode: Episode,
+  resourcesDir?: string,
+): Promise<void> {
+  await mkdir(publicDir, { recursive: true });
+
+  const episodeJsonTarget = resolve(episodeDir, "episode.json");
+  const rushsTarget = resolve(episode.sourceDir);
+  const candidateResources =
+    resourcesDir !== undefined
+      ? resolve(resourcesDir)
+      : join(dirname(rushsTarget), "Ressources");
+
+  await replaceSymlink(episodeJsonTarget, join(publicDir, "episode.json"), "file");
+  await replaceSymlink(rushsTarget, join(publicDir, "rushs"), "dir");
+
+  const resourcesDest = join(publicDir, "resources");
+  await rm(resourcesDest, { recursive: true, force: true });
+  if (await pathExists(candidateResources)) {
+    await symlink(candidateResources, resourcesDest, "dir");
+  }
+}
+
+/** Arguments CLI destinés à `npx remotion render`. */
+export function remotionRenderArgs(
+  entryPoint: string,
+  output: string,
+  publicDir: string,
+  scale?: number,
+): string[] {
+  return [
+    "remotion",
+    "render",
+    entryPoint,
+    "Episode",
+    output,
+    `--public-dir=${publicDir}`,
+    ...(scale !== undefined ? [`--scale=${scale}`] : []),
+  ];
+}
+
+/** Arguments CLI destinés à `npx remotion studio`. */
+export function remotionStudioArgs(entryPoint: string, publicDir: string): string[] {
+  return ["remotion", "studio", entryPoint, `--public-dir=${publicDir}`];
+}
+
+/** Exécute le rendu vidéo final via `npx remotion render`. */
+export async function runRemotionRender(
+  entryPoint: string,
+  output: string,
+  publicDir: string,
+  scale?: number,
+): Promise<void> {
+  await runNpx(remotionRenderArgs(entryPoint, output, publicDir, scale));
+}
+
+/** Ouvre le studio interactif Remotion via `npx remotion studio`. */
+export async function runRemotionStudio(entryPoint: string, publicDir: string): Promise<void> {
+  await runNpx(remotionStudioArgs(entryPoint, publicDir));
+}
+
+async function replaceSymlink(
+  target: string,
+  linkPath: string,
+  type: "file" | "dir",
+): Promise<void> {
+  await rm(linkPath, { recursive: true, force: true });
+  await symlink(target, linkPath, type);
+}
+
+async function pathExists(path: string): Promise<boolean> {
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function runNpx(args: readonly string[]): Promise<void> {
+  return new Promise((resolvePromise, rejectPromise) => {
+    const child = spawn("npx", [...args], { stdio: "inherit" });
+    child.on("error", rejectPromise);
+    child.on("close", (code) => {
+      if (code === 0) {
+        resolvePromise();
+      } else {
+        rejectPromise(new Error(`npx ${args.join(" ")} a échoué avec le code ${String(code)}`));
+      }
+    });
+  });
+}
