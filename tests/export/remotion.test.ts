@@ -2,6 +2,7 @@ import { lstat, mkdir, mkdtemp, readlink, rm, writeFile } from "node:fs/promises
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { applyWebpackExtensionAlias } from "../../remotion.config.js";
 import type { Episode } from "../../src/domain/episode.js";
 import {
   preparePublicDir,
@@ -106,4 +107,14 @@ describe("export/remotion", () => {
       "--public-dir=public",
     ]);
   });
+
+  it("configure Webpack pour résoudre les imports ESM .js vers .ts et .tsx", () => {
+    const overridden = applyWebpackExtensionAlias({ resolve: {} });
+    expect(overridden.resolve?.extensionAlias).toEqual({
+      ".js": [".ts", ".tsx", ".js", ".jsx"],
+    });
+  });
 });
+
+
+
