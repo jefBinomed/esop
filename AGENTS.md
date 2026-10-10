@@ -70,5 +70,6 @@ Aucun agent (principal ou sous-agent) ne rend la main sans avoir validé :
    - `npm run typecheck` (`tsc --noEmit`) : **0 erreur**.
    - `npm test` (`HOME=/tmp npx vitest run --configLoader runner` en sandbox) : **100 % des tests au vert**.
 3. **Gate visuelle (si modification du découpage ou du rendu d'un épisode)** :
-   - Exécuter `npm run esop -- preview` et **inspecter visuellement `preview.png`** (centrage du visage, alternance `large`/`serré`, absence de postures parasites aux points de coupe).
+   - Découpage / preview : exécuter `npm run esop -- preview` et **inspecter visuellement `preview.png`** (centrage du visage, alternance `large`/`serré`, absence de postures parasites aux points de coupe).
+   - Remotion (`remotion/` ou `src/export/remotion.ts`) : ne jamais se contenter du bundling Webpack — exécuter un rendu réel `npx remotion still remotion/index.ts Episode /tmp/remotion-test-frame.png --frame=100` (hors sandbox car Chrome Headless Shell requiert Mach ports + serveur HTTP local) et **inspecter visuellement le PNG généré**.
 
