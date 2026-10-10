@@ -20,7 +20,7 @@ const EMPTY_TIMELINE: CompiledTimeline = {
 
 const DEFAULT_PROPS: EpisodeProps = {
   timeline: EMPTY_TIMELINE,
-  hasMusic: false,
+  hasMusic: true,
 };
 
 const calculateEpisodeMetadata: CalculateMetadataFunction<EpisodeProps> = async ({

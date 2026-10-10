@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { access, copyFile, mkdir, rm, symlink } from "node:fs/promises";
-import { dirname, join, resolve } from "node:path";
+import { join, resolve } from "node:path";
 import type { Episode } from "../domain/episode.js";
 
 /**
@@ -21,10 +21,13 @@ export async function preparePublicDir(
   const episodeJsonTarget = resolve(episodeDir, "episode.json");
   const episodeJsonDest = join(publicDir, "episode.json");
   const rushsTarget = resolve(episode.sourceDir);
-  const candidateResources =
+  const candidateResourcesList =
     resourcesDir !== undefined
-      ? resolve(resourcesDir)
-      : join(dirname(rushsTarget), "Ressources");
+      ? [resolve(resourcesDir)]
+      : [
+          resolve(episode.sourceDir, "../01-Ressources"),
+          resolve(episode.sourceDir, "../Ressources"),
+        ];
 
   await rm(episodeJsonDest, { force: true });
   await copyFile(episodeJsonTarget, episodeJsonDest);
@@ -32,8 +35,11 @@ export async function preparePublicDir(
 
   const resourcesDest = join(publicDir, "resources");
   await rm(resourcesDest, { recursive: true, force: true });
-  if (await pathExists(candidateResources)) {
-    await symlink(candidateResources, resourcesDest, "dir");
+  for (const candidate of candidateResourcesList) {
+    if (await pathExists(candidate)) {
+      await symlink(candidate, resourcesDest, "dir");
+      break;
+    }
   }
 }
 

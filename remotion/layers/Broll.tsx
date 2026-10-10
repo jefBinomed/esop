@@ -51,30 +51,42 @@ const BrollItem: React.FC<BrollItemProps> = ({ cue }) => {
     [1, 1 + THEME.kenBurnsScale],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
   );
+  const isLogo = /\.(png|webp|svg)$/i.test(cue.asset);
 
   return (
-    <AbsoluteFill
-      style={{
-        opacity,
-        justifyContent: "center",
-        alignItems: "center",
-        overflow: "hidden",
-      }}
-    >
-      <Img
-        src={src}
+    <AbsoluteFill style={{ pointerEvents: "none" }}>
+      <div
         style={{
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          transform: `scale(${scale.toFixed(4)})`,
+          position: "absolute",
+          top: 44,
+          left: 40,
+          width: 430,
+          height: 280,
+          borderRadius: 20,
+          overflow: "hidden",
+          boxShadow: "0 20px 50px rgba(0,0,0,0.55)",
+          backgroundColor: "#fff",
+          opacity,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
         }}
-      />
+      >
+        <Img
+          src={src}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: isLogo ? "contain" : "cover",
+            transform: `scale(${scale.toFixed(4)})`,
+          }}
+        />
+      </div>
     </AbsoluteFill>
   );
 };
 
-/** Calque B-roll : vidéos plein cadre avec fondu d'entrée 8 frames, images en Ken Burns lent. */
+/** Calque B-roll : vidéos plein cadre avec fondu d'entrée 8 frames, images en PiP coin supérieur gauche avec Ken Burns lent. */
 export const BrollLayer: React.FC<BrollLayerProps> = ({ brolls }) => {
   return (
     <AbsoluteFill>

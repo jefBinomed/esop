@@ -346,5 +346,56 @@ describe("compileTimeline", () => {
     };
     expect(() => compileTimeline(brokenEpisode)).toThrow(/prise inconnue/);
   });
+
+  it("génère des cartes de chapitre à partir de segment.chapterIndex sur un rush unique (et omet la carte du chapitre 0 sauf si includeChapterCards: true)", () => {
+    const singleTake = makeTake({
+      id: "PXL_20250412",
+      file: "/rushs/PXL_20250412.mp4",
+      chapterIndex: 0,
+      chapter: "rush",
+    });
+    const episode: Episode = {
+      name: "imposteur",
+      sourceDir: "/rushs",
+      takes: [singleTake],
+      silences: {},
+      segments: [
+        {
+          takeId: "PXL_20250412",
+          start: 0.5,
+          end: 3.5,
+          framing: "large",
+          chapterIndex: 0,
+          chapter: "Hook",
+          words: [{ text: "Salut", start: 0.5, end: 1.0 }],
+        },
+        {
+          takeId: "PXL_20250412",
+          start: 26.0,
+          end: 30.0,
+          framing: "large",
+          chapterIndex: 1,
+          chapter: "Anecdote personnelle",
+          words: [{ text: "Anecdote", start: 26.0, end: 27.0 }],
+        },
+      ],
+    };
+
+    const timeline = compileTimeline(episode);
+    expect(timeline.chapters).toEqual([
+      {
+        chapterIndex: 1,
+        title: "Anecdote personnelle",
+        start: 3.0,
+        end: 5.0,
+        startFrame: 90,
+        durationInFrames: 60,
+      },
+    ]);
+    expect(timeline.shots.map((s) => ({ start: s.start, end: s.end, startFrame: s.startFrame }))).toEqual([
+      { start: 0, end: 3.0, startFrame: 0 },
+      { start: 5.0, end: 9.0, startFrame: 150 },
+    ]);
+  });
 });
 

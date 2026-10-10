@@ -1,9 +1,11 @@
 import type React from "react";
 import {
   AbsoluteFill,
+  Img,
   interpolate,
   Sequence,
   spring,
+  staticFile,
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
@@ -36,50 +38,63 @@ const ChapterCard: React.FC<ChapterCardProps> = ({ cue }) => {
   );
 
   const scale = interpolate(enter, [0, 1], [0.88, 1]);
-  const numberLabel = String(cue.chapterIndex).padStart(2, "0");
 
   return (
     <AbsoluteFill
       style={{
         backgroundColor: THEME.colors.background,
-        justifyContent: "center",
-        alignItems: "center",
         opacity: exitOpacity,
         fontFamily: THEME.fonts.heading,
       }}
     >
+      <Img
+        src={staticFile("resources/chapitre-bulle-vide.png")}
+        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+      />
       <div
         style={{
+          position: "absolute",
+          left: "14.2%",
+          top: "9.2%",
+          width: "27.6%",
+          height: "24.5%",
           display: "flex",
-          flexDirection: "column",
           alignItems: "center",
-          gap: 24,
-          padding: "56px 88px",
-          borderRadius: 36,
-          backgroundColor: THEME.colors.surface,
-          border: `3px solid ${THEME.colors.accent}`,
-          boxShadow: "0 24px 64px rgba(0, 0, 0, 0.55)",
+          justifyContent: "center",
           transform: `scale(${scale.toFixed(4)})`,
         }}
       >
         <span
           style={{
-            fontFamily: THEME.fonts.mono,
-            fontSize: 44,
-            fontWeight: 700,
-            letterSpacing: 4,
-            color: THEME.colors.accent,
+            color: "#0c3c52",
+            fontSize: 46,
+            fontWeight: 900,
+            letterSpacing: 2,
           }}
         >
-          CHAPITRE {numberLabel}
+          CHAPITRE {cue.chapterIndex}
         </span>
+      </div>
+      <div
+        style={{
+          position: "absolute",
+          left: "46%",
+          top: "0",
+          width: "46%",
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         <h1
           style={{
             margin: 0,
-            fontSize: 84,
+            color: "#f8fafc",
+            fontSize: 64,
             fontWeight: 800,
-            color: THEME.colors.primary,
             textAlign: "center",
+            lineHeight: 1.2,
           }}
         >
           {cue.title}

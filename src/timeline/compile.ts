@@ -112,7 +112,7 @@ export function compileTimeline(episode: Episode, opts?: CompileOptions): Compil
 
   const hasNamedChapters =
     episode.takes.some((t) => t.chapterIndex > 0) ||
-    keptSegments.some((s) => (takesById.get(s.takeId)?.chapterIndex ?? 0) > 0);
+    keptSegments.some((s) => (s.chapterIndex ?? takesById.get(s.takeId)?.chapterIndex ?? 0) > 0);
   const useChapterCards = opts?.includeChapterCards ?? hasNamedChapters;
   const chapterDuration =
     opts?.chapterDuration !== undefined
@@ -136,16 +136,23 @@ export function compileTimeline(episode: Episode, opts?: CompileOptions): Compil
       throw new Error(`prise inconnue : ${segment.takeId}`);
     }
 
-    if (take.chapterIndex !== currentChapterIndex) {
-      currentChapterIndex = take.chapterIndex;
-      if (chapterDuration > 0 && opts?.includeChapterCards !== false) {
+    const chapterIndex = segment.chapterIndex ?? take.chapterIndex;
+    const chapterTitle = segment.chapter ?? take.chapter;
+
+    if (chapterIndex !== currentChapterIndex) {
+      currentChapterIndex = chapterIndex;
+      const shouldInsertCard =
+        chapterDuration > 0 &&
+        opts?.includeChapterCards !== false &&
+        (chapterIndex > 0 || opts?.includeChapterCards === true || segment.chapterIndex === undefined);
+      if (shouldInsertCard) {
         const chapterStart = cursor;
         const chapterEnd = roundTime(cursor + chapterDuration);
         const startFrame = Math.round(chapterStart * fps);
         const endFrame = Math.round(chapterEnd * fps);
         chapters.push({
-          chapterIndex: take.chapterIndex,
-          title: take.chapter,
+          chapterIndex,
+          title: chapterTitle,
           start: chapterStart,
           end: chapterEnd,
           startFrame,

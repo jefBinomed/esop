@@ -56,9 +56,9 @@ describe("parseMontage", () => {
     expect(parseMontage(expected)).toEqual({
       title: "conclusion",
       lines: [
-        { takeId: "00-hook-1.2", start: 0.47, end: 8.09, text: "Lundi soir,", dropped: false, annotations: [] },
-        { takeId: "00-hook-1.2", start: 9.27, end: 13.55, text: "Votre", dropped: false, framing: "serré", annotations: [] },
-        { takeId: "02-Probleme-1.2", start: 0.3, end: 4.9, text: "Et", dropped: true, annotations: ["broll: sac.mp4"] },
+        { takeId: "00-hook-1.2", start: 0.47, end: 8.09, text: "Lundi soir,", dropped: false, annotations: [], chapterIndex: 0, chapter: "hook" },
+        { takeId: "00-hook-1.2", start: 9.27, end: 13.55, text: "Votre", dropped: false, framing: "serré", annotations: [], chapterIndex: 0, chapter: "hook" },
+        { takeId: "02-Probleme-1.2", start: 0.3, end: 4.9, text: "Et", dropped: true, annotations: ["broll: sac.mp4"], chapterIndex: 2, chapter: "Probleme" },
       ],
     });
   });
@@ -68,9 +68,10 @@ describe("parseMontage", () => {
     expect(doc.lines[0]).toMatchObject({ framing: "large", annotations: ["mot: bug", "texte: 1. x"], text: "ok" });
   });
 
-  it("ignore les lignes libres et les titres de chapitre", () => {
+  it("ignore les lignes libres et associe les titres de chapitre aux lignes suivantes", () => {
     const doc = parseMontage("# t\n\nnote perso\n## 00 — hook\n[t 00:00.000→00:01.000] ok\n");
     expect(doc.lines).toHaveLength(1);
+    expect(doc.lines[0]).toMatchObject({ chapterIndex: 0, chapter: "hook" });
   });
 });
 
@@ -82,12 +83,14 @@ describe("segmentsFromMontage", () => {
     ];
     const doc = parseMontage(expected);
     expect(segmentsFromMontage(doc, takesWithWords)).toEqual([
-      { takeId: "00-hook-1.2", start: 0.47, end: 8.09, words: [w("Lundi", 0.5, 0.9), w("soir,", 1, 1.4)] },
-      { takeId: "00-hook-1.2", start: 9.27, end: 13.55, framing: "serré", words: [w("Votre", 9.3, 9.6)] },
+      { takeId: "00-hook-1.2", start: 0.47, end: 8.09, chapterIndex: 0, chapter: "hook", words: [w("Lundi", 0.5, 0.9), w("soir,", 1, 1.4)] },
+      { takeId: "00-hook-1.2", start: 9.27, end: 13.55, framing: "serré", chapterIndex: 0, chapter: "hook", words: [w("Votre", 9.3, 9.6)] },
       {
         takeId: "02-Probleme-1.2",
         start: 0.3,
         end: 4.9,
+        chapterIndex: 2,
+        chapter: "Probleme",
         dropped: true,
         annotations: ["broll: sac.mp4"],
         words: [w("Et", 0.4, 0.5)],
@@ -109,17 +112,58 @@ describe("mergeMontageEdits", () => {
     ];
     const doc = parseMontage(expected);
     expect(mergeMontageEdits(fresh, doc)).toEqual([
-      { takeId: "00-hook-1.2", start: 0.47, end: 8.09, words: [w("Lundi", 0.5, 0.9)] },
+      { takeId: "00-hook-1.2", start: 0.47, end: 8.09, chapterIndex: 0, chapter: "hook", words: [w("Lundi", 0.5, 0.9)] },
       {
         takeId: "02-Probleme-1.2",
         start: 0.3,
         end: 4.9,
+        chapterIndex: 2,
+        chapter: "Probleme",
         dropped: true,
         annotations: ["broll: sac.mp4"],
         words: [w("Et", 0.4, 0.5)],
       },
     ]);
   });
+
+  it("préserve les chapitres inline au milieu d'un rush unique (parse ↔ serialize ↔ merge)", () => {
+    const singleTake: Take[] = [
+      { id: "rush-1", file: "rush-1.mp4", chapterIndex: 0, chapter: "rush", take: 1, version: 1, duration: 60, words: [w("Un", 1, 2), w("Deux", 10, 11)] },
+    ];
+    const inlineMd = `# imposteur
+
+## 00 — Hook
+
+[rush-1 00:01.000→00:02.000] (large) Un
+
+## 01 — Anecdote personnelle
+
+[rush-1 00:10.000→00:11.000] (large) Deux
+`;
+    const doc = parseMontage(inlineMd);
+    expect(doc.lines).toEqual([
+      { takeId: "rush-1", start: 1, end: 2, text: "Un", dropped: false, framing: "large", annotations: [], chapterIndex: 0, chapter: "Hook" },
+      { takeId: "rush-1", start: 10, end: 11, text: "Deux", dropped: false, framing: "large", annotations: [], chapterIndex: 1, chapter: "Anecdote personnelle" },
+    ]);
+
+    const rebuilt = segmentsFromMontage(doc, singleTake);
+    expect(rebuilt).toEqual([
+      { takeId: "rush-1", start: 1, end: 2, framing: "large", chapterIndex: 0, chapter: "Hook", words: [w("Un", 1, 2)] },
+      { takeId: "rush-1", start: 10, end: 11, framing: "large", chapterIndex: 1, chapter: "Anecdote personnelle", words: [w("Deux", 10, 11)] },
+    ]);
+
+    expect(serializeMontage("imposteur", singleTake, rebuilt)).toBe(inlineMd);
+
+    const rawSegments: Segment[] = [
+      { takeId: "rush-1", start: 1, end: 2, words: [w("Un", 1, 2)] },
+      { takeId: "rush-1", start: 10, end: 11, words: [w("Deux", 10, 11)] },
+    ];
+    const merged = mergeMontageEdits(rawSegments, doc);
+    expect(serializeMontage("imposteur", singleTake, merged)).toBe(
+      inlineMd.replace(/\(large\) /g, ""),
+    );
+  });
 });
+
 
 

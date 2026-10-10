@@ -38,6 +38,15 @@ describe("applyFramingPattern", () => {
     const out = applyFramingPattern([seg("t", 0, 3), seg("t", 4, 7, { dropped: true }), seg("t", 8, 11)]);
     expect(framings(out)).toEqual(["large", undefined, "serré"]);
   });
+
+  it("repart en large au changement de chapitre inline sur une même prise", () => {
+    const out = applyFramingPattern([
+      seg("t", 0, 3, { chapterIndex: 0, chapter: "Hook" }),
+      seg("t", 4, 7, { chapterIndex: 0, chapter: "Hook" }),
+      seg("t", 8, 11, { chapterIndex: 1, chapter: "Anecdote" }),
+    ]);
+    expect(framings(out)).toEqual(["large", "serré", "large"]);
+  });
 });
 
 describe("cropRect", () => {

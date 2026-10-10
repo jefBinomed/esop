@@ -18,6 +18,7 @@ export function applyFramingPattern(
   opts: PatternOptions = DEFAULT_PATTERN_OPTIONS,
 ): Segment[] {
   let previousTake: string | undefined;
+  let previousChapter: number | undefined;
   let previous: Framing | undefined;
 
   return segments.map((segment) => {
@@ -26,7 +27,11 @@ export function applyFramingPattern(
     let framing: Framing;
     if (segment.framing !== undefined) {
       framing = segment.framing;
-    } else if (segment.takeId !== previousTake || previous === undefined) {
+    } else if (
+      segment.takeId !== previousTake ||
+      segment.chapterIndex !== previousChapter ||
+      previous === undefined
+    ) {
       framing = "large";
     } else if (segment.end - segment.start < opts.minDurationForChange) {
       framing = previous;
@@ -35,7 +40,9 @@ export function applyFramingPattern(
     }
 
     previousTake = segment.takeId;
+    previousChapter = segment.chapterIndex;
     previous = framing;
     return { ...segment, framing };
   });
 }
+

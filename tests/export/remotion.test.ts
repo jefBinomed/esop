@@ -54,6 +54,37 @@ describe("export/remotion", () => {
     }
   });
 
+  it("détecte automatiquement ../01-Ressources quand aucun resourcesDir n'est fourni", async () => {
+    const root = await mkdtemp(join(tmpdir(), "esop-remotion-01res-"));
+    try {
+      const sourceParent = join(root, "Desktop", "EtSiOnParlait");
+      const sourceDir = join(sourceParent, "imposteur");
+      const resources01Dir = join(sourceParent, "01-Ressources");
+      const episodeDir = join(root, "episodes", "imposteur");
+      const publicDir = join(root, "public");
+
+      await mkdir(sourceDir, { recursive: true });
+      await mkdir(resources01Dir, { recursive: true });
+      await mkdir(episodeDir, { recursive: true });
+      await writeFile(join(episodeDir, "episode.json"), '{"name":"imposteur"}', "utf8");
+
+      const episode: Episode = {
+        name: "imposteur",
+        sourceDir,
+        takes: [],
+        silences: {},
+      };
+
+      await preparePublicDir(publicDir, episodeDir, episode);
+
+      const resLink = join(publicDir, "resources");
+      expect((await lstat(resLink)).isSymbolicLink()).toBe(true);
+      expect(await readlink(resLink)).toBe(resolve(resources01Dir));
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it("omet le lien resources si le dossier Ressources n'existe pas", async () => {
     const root = await mkdtemp(join(tmpdir(), "esop-remotion-nores-"));
     try {

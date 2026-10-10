@@ -12,7 +12,7 @@ export interface MusicLayerProps {
 /** Piste musicale en boucle avec ducking automatique (−14 dB) sous la parole. */
 export const MusicLayer: React.FC<MusicLayerProps> = ({
   shots,
-  src = "resources/funk-244706.mp3",
+  src = "rushs/funk-244706.mp3",
 }) => {
   const { fps } = useVideoConfig();
 

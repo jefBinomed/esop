@@ -25,8 +25,8 @@ export type EpisodeProps = {
 export const EpisodeComposition: React.FC<EpisodeProps> = ({
   timeline,
   episode,
-  hasMusic = false,
-  musicSrc,
+  hasMusic = true,
+  musicSrc = "rushs/funk-244706.mp3",
 }) => {
   const activeTimeline = episode !== undefined ? compileTimeline(episode) : timeline;
 

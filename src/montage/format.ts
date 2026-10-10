@@ -15,6 +15,8 @@ export interface MontageLine {
   readonly framing?: Framing;
   /** Annotations `{clé: valeur}` conservées telles quelles pour les calques. */
   readonly annotations: readonly string[];
+  readonly chapterIndex?: number;
+  readonly chapter?: string;
 }
 
 export interface MontageDoc {
@@ -24,7 +26,7 @@ export interface MontageDoc {
 
 /**
  * Écrit `montage.md` : un titre, une section par chapitre dans l'ordre des
- * prises, une ligne par segment. Une ligne barrée est un segment coupé.
+ * segments (ou des prises par défaut), une ligne par segment. Une ligne barrée est un segment coupé.
  */
 export function serializeMontage(title: string, takes: readonly Take[], segments: readonly Segment[]): string {
   const takesById = new Map(takes.map((t) => [t.id, t]));
@@ -34,7 +36,9 @@ export function serializeMontage(title: string, takes: readonly Take[], segments
   for (const segment of segments) {
     const take = takesById.get(segment.takeId);
     if (take === undefined) throw new Error(`prise inconnue : ${segment.takeId}`);
-    const chapter = `${String(take.chapterIndex).padStart(2, "0")} — ${take.chapter}`;
+    const chIdx = segment.chapterIndex ?? take.chapterIndex;
+    const chTitle = segment.chapter ?? take.chapter;
+    const chapter = `${String(chIdx).padStart(2, "0")} — ${chTitle}`;
     if (chapter !== currentChapter) {
       if (currentChapter !== undefined) out.push("");
       out.push(`## ${chapter}`, "");
@@ -55,13 +59,16 @@ function formatLine(segment: Segment): string {
 }
 
 const TITLE = /^#\s+(.+)$/;
+const CHAPTER_HEADER = /^##\s+(\d+)\s+[—–-]\s+(.+?)\s*$/;
 const LINE = /^\[(\S+)\s+(\S+)→(\S+)\]\s*(.*)$/;
 const FRAMING = /^\((large|serré)\)\s*/;
 const ANNOTATION = /^\{([^}]*)\}\s*/;
 
-/** Lit `montage.md`. Les titres de chapitre sont ignorés : ils se déduisent des prises. */
+/** Lit `montage.md` et associe chaque en-tête `## NN — Titre` aux segments qui suivent. */
 export function parseMontage(markdown: string): MontageDoc {
   let title = "";
+  let currentChapterIndex: number | undefined;
+  let currentChapterTitle: string | undefined;
   const lines: MontageLine[] = [];
 
   for (const raw of markdown.split("\n")) {
@@ -70,11 +77,22 @@ export function parseMontage(markdown: string): MontageDoc {
       title = titleMatch[1].trim();
       continue;
     }
+    const chapterMatch = CHAPTER_HEADER.exec(raw);
+    if (chapterMatch?.[1] !== undefined && chapterMatch[2] !== undefined) {
+      currentChapterIndex = Number(chapterMatch[1]);
+      currentChapterTitle = chapterMatch[2].trim();
+      continue;
+    }
     const match = LINE.exec(raw);
     if (match === null) continue;
     const [, takeId, start, end, rest] = match;
     if (takeId === undefined || start === undefined || end === undefined || rest === undefined) continue;
-    lines.push(parseRest(takeId, parseTimecode(start), parseTimecode(end), rest));
+    const parsedLine = parseRest(takeId, parseTimecode(start), parseTimecode(end), rest);
+    lines.push(
+      currentChapterIndex !== undefined && currentChapterTitle !== undefined
+        ? { ...parsedLine, chapterIndex: currentChapterIndex, chapter: currentChapterTitle }
+        : parsedLine,
+    );
   }
   return { title, lines };
 }
@@ -139,6 +157,9 @@ export function segmentsFromMontage(
           (w.start === w.end || Math.min(line.end, w.end) > Math.max(line.start, w.start)),
       );
 
+    const chapterIndex = line.chapterIndex ?? prev?.chapterIndex;
+    const chapter = line.chapter ?? prev?.chapter;
+
     return {
       takeId: line.takeId,
       start: line.start,
@@ -147,13 +168,14 @@ export function segmentsFromMontage(
       ...(line.dropped ? { dropped: true } : {}),
       ...(!line.dropped && line.framing !== undefined ? { framing: line.framing } : {}),
       ...(line.annotations.length > 0 ? { annotations: line.annotations } : {}),
+      ...(chapterIndex !== undefined && chapter !== undefined ? { chapterIndex, chapter } : {}),
     };
   });
 }
 
 /**
- * Reporte les coupes barrées (`~~...~~`) et les annotations `{...}` d'un
- * `montage.md` existant sur un nouveau découpage par timecode.
+ * Reporte les coupes barrées (`~~...~~`), les annotations `{...}` et les chapitres
+ * inline d'un `montage.md` existant sur un nouveau découpage par timecode.
  */
 export function mergeMontageEdits(segments: readonly Segment[], doc: MontageDoc): Segment[] {
   return segments.map((segment) => {
@@ -167,7 +189,11 @@ export function mergeMontageEdits(segments: readonly Segment[], doc: MontageDoc)
       ...segment,
       ...(match.dropped ? { dropped: true } : {}),
       ...(match.annotations.length > 0 ? { annotations: match.annotations } : {}),
+      ...(match.chapterIndex !== undefined && match.chapter !== undefined
+        ? { chapterIndex: match.chapterIndex, chapter: match.chapter }
+        : {}),
     };
   });
 }
+
 

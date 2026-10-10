@@ -32,27 +32,25 @@ const TextBanner: React.FC<TextBannerProps> = ({ cue }) => {
   const opacity = interpolate(enter, [0, 1], [0, 1]);
 
   return (
-    <AbsoluteFill
-      style={{
-        justifyContent: "flex-end",
-        alignItems: "flex-start",
-        padding: "0 96px 140px 96px",
-        pointerEvents: "none",
-      }}
-    >
+    <AbsoluteFill style={{ pointerEvents: "none" }}>
       <div
         style={{
-          padding: "24px 44px",
-          borderRadius: 20,
-          backgroundColor: THEME.colors.surface,
-          borderLeft: `8px solid ${THEME.colors.accent}`,
+          position: "absolute",
+          top: 52,
+          left: 40,
+          width: 430,
+          backgroundColor: "rgba(43, 76, 126, 0.94)",
+          borderRadius: 18,
+          padding: "24px 28px",
           boxShadow: "0 16px 40px rgba(0, 0, 0, 0.45)",
           transform: `translateX(${translateX.toFixed(2)}px)`,
           opacity,
           fontFamily: THEME.fonts.heading,
-          fontSize: 48,
+          color: "#f8fafc",
+          fontSize: 38,
           fontWeight: 700,
-          color: THEME.colors.primary,
+          textAlign: "center",
+          lineHeight: 1.25,
         }}
       >
         {cue.text}
@@ -86,25 +84,23 @@ const KeywordBadge: React.FC<KeywordBadgeProps> = ({ cue }) => {
   return (
     <AbsoluteFill
       style={{
-        justifyContent: "flex-start",
-        alignItems: "flex-start",
-        padding: "120px 96px",
         pointerEvents: "none",
         opacity: exitOpacity,
       }}
     >
       <div
         style={{
-          padding: "18px 38px",
-          borderRadius: 999,
-          backgroundColor: THEME.colors.accent,
-          color: THEME.colors.background,
+          position: "absolute",
+          top: "48%",
+          right: 110,
+          color: "#facc15",
           fontFamily: THEME.fonts.heading,
-          fontSize: 52,
+          fontSize: 68,
           fontWeight: 900,
           textTransform: "uppercase",
           letterSpacing: 2,
-          boxShadow: "0 18px 42px rgba(0, 0, 0, 0.4)",
+          WebkitTextStroke: "3px #000",
+          textShadow: "0 6px 18px rgba(0,0,0,0.85)",
           transform: `scale(${scale.toFixed(4)})`,
         }}
       >
