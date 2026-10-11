@@ -4,6 +4,7 @@ import type { Episode } from "../src/domain/episode.js";
 import { compileTimeline, type CompiledTimeline } from "../src/timeline/compile.js";
 import { compileShort, SHORT_DIMENSIONS } from "../src/timeline/shorts.js";
 import { EpisodeComposition, type EpisodeProps } from "./Episode.js";
+import { OverviewComposition } from "./Overview.js";
 import { ShortComposition, type ShortProps } from "./Short.js";
 import { THEME } from "./theme.js";
 
@@ -119,13 +120,23 @@ const calculateShortMetadata: CalculateMetadataFunction<ShortProps> = async ({
   }
 };
 
-/** Racine Remotion déclarant les compositions `Episode` (16:9) et `Short` (9:16). */
+/** Racine Remotion déclarant les compositions `Episode` (16:9), `VueEnsemble` (cockpit de montage) et `Short` (9:16). */
 export const RemotionRoot: React.FC = () => {
   return (
     <>
       <Composition
         id="Episode"
         component={EpisodeComposition}
+        durationInFrames={EMPTY_TIMELINE.durationInFrames}
+        fps={THEME.fps}
+        width={THEME.width}
+        height={THEME.height}
+        defaultProps={DEFAULT_PROPS}
+        calculateMetadata={calculateEpisodeMetadata}
+      />
+      <Composition
+        id="VueEnsemble"
+        component={OverviewComposition}
         durationInFrames={EMPTY_TIMELINE.durationInFrames}
         fps={THEME.fps}
         width={THEME.width}

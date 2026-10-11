@@ -10,6 +10,7 @@ import {
   useRemotionEnvironment,
 } from "remotion";
 import type { BrollCue } from "../../src/timeline/compile.js";
+import { formatCompactTime } from "../../src/timeline/overview.js";
 import { fileBasename, studioSafeVideoSrc, THEME } from "../theme.js";
 
 export interface BrollLayerProps {
@@ -93,6 +94,7 @@ export const BrollLayer: React.FC<BrollLayerProps> = ({ brolls }) => {
       {brolls.map((cue, index) => (
         <Sequence
           key={`broll-${cue.takeId}-${cue.startFrame}-${index}`}
+          name={`🖼️ B-Roll · ${fileBasename(cue.asset)} (${formatCompactTime(cue.start)}→${formatCompactTime(cue.end)})`}
           from={cue.startFrame}
           durationInFrames={cue.durationInFrames}
           premountFor={THEME.fps}

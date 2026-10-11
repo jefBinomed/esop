@@ -1,6 +1,10 @@
 import type React from "react";
 import { AbsoluteFill, Sequence, useCurrentFrame, useVideoConfig } from "remotion";
-import { activeWordIndex, type CaptionPage } from "../../src/timeline/captions.js";
+import {
+  activeWordIndex,
+  findCaptionPageAtFrame,
+  type CaptionPage,
+} from "../../src/timeline/captions.js";
 import { THEME } from "../theme.js";
 
 export interface CaptionsLayerProps {
@@ -9,12 +13,10 @@ export interface CaptionsLayerProps {
 
 interface CaptionPageViewProps {
   readonly page: CaptionPage;
+  readonly currentTime: number;
 }
 
-const CaptionPageView: React.FC<CaptionPageViewProps> = ({ page }) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  const currentTime = (page.startFrame + frame) / fps;
+const CaptionPageView: React.FC<CaptionPageViewProps> = ({ page, currentTime }) => {
   const activeIndex = activeWordIndex(page.words, currentTime);
 
   return (
@@ -67,19 +69,25 @@ const CaptionPageView: React.FC<CaptionPageViewProps> = ({ page }) => {
   );
 };
 
-/** Calque de sous-titres mot à mot dynamiques (3 mots maximum par page, mot actif surligné). */
+const ActiveCaptionTrack: React.FC<CaptionsLayerProps> = ({ captions }) => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const activePage = findCaptionPageAtFrame(captions, frame);
+  if (activePage === undefined) {
+    return null;
+  }
+  return <CaptionPageView page={activePage} currentTime={frame / fps} />;
+};
+
+/** Calque de sous-titres mot à mot dynamiques regroupés en une seule piste dans la timeline Studio. */
 export const CaptionsLayer: React.FC<CaptionsLayerProps> = ({ captions }) => {
+  if (captions.length === 0) {
+    return null;
+  }
   return (
-    <AbsoluteFill style={{ pointerEvents: "none" }}>
-      {captions.map((page, index) => (
-        <Sequence
-          key={`caption-${page.startFrame}-${index}`}
-          from={page.startFrame}
-          durationInFrames={page.durationInFrames}
-        >
-          <CaptionPageView page={page} />
-        </Sequence>
-      ))}
-    </AbsoluteFill>
+    <Sequence name={`💬 Sous-titres dynamiques (${captions.length} pages)`}>
+      <ActiveCaptionTrack captions={captions} />
+    </Sequence>
   );
 };
+

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activeWordIndex, buildCaptionPages } from "../../src/timeline/captions.js";
+import { activeWordIndex, buildCaptionPages, findCaptionPageAtFrame } from "../../src/timeline/captions.js";
 import type { TalkShot, TimelineWord } from "../../src/timeline/compile.js";
 
 function makeWord(text: string, timelineStart: number, timelineEnd: number): TimelineWord {
@@ -154,6 +154,25 @@ describe("buildCaptionPages", () => {
     expect(activeWordIndex(words, 1.5)).toBe(1);
     expect(activeWordIndex(words, 1.75)).toBe(1); // dans le creux entre Deux et Trois -> dernier mot commencé = 1
     expect(activeWordIndex(words, 2.0)).toBe(2);
+  });
+
+  it("retourne la page de sous-titre active à la frame donnée via findCaptionPageAtFrame", () => {
+    const shot = makeShot([
+      makeWord("Lundi", 0.0, 0.3),
+      makeWord("soir", 0.3, 0.6),
+      makeWord("votre", 0.6, 0.9),
+      makeWord("pote", 1.5, 1.8),
+    ]);
+    const pages = buildCaptionPages([shot]); // page 0: frames 0..26 (dur 27), page 1: frames 45..53 (dur 9)
+
+    expect(findCaptionPageAtFrame(pages, 0)).toEqual(pages[0]);
+    expect(findCaptionPageAtFrame(pages, 15)).toEqual(pages[0]);
+    expect(findCaptionPageAtFrame(pages, 26)).toEqual(pages[0]);
+    expect(findCaptionPageAtFrame(pages, 27)).toBeUndefined();
+    expect(findCaptionPageAtFrame(pages, 44)).toBeUndefined();
+    expect(findCaptionPageAtFrame(pages, 45)).toEqual(pages[1]);
+    expect(findCaptionPageAtFrame(pages, 53)).toEqual(pages[1]);
+    expect(findCaptionPageAtFrame(pages, 54)).toBeUndefined();
   });
 });
 

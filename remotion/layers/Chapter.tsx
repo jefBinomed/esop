@@ -117,6 +117,7 @@ export const ChapterLayer: React.FC<ChapterLayerProps> = ({ chapters }) => {
       {chapters.map((cue) => (
         <Sequence
           key={`chapter-${cue.chapterIndex}-${cue.startFrame}`}
+          name={`📑 Chapitre ${cue.chapterIndex} — ${cue.title}`}
           from={cue.startFrame}
           durationInFrames={cue.durationInFrames}
         >

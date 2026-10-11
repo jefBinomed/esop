@@ -114,3 +114,17 @@ export function activeWordIndex(words: readonly TimedWord[], currentTime: number
   return fallbackIndex;
 }
 
+/**
+ * Retourne la page de sous-titre active à la frame donnée (`frame >= startFrame`
+ * et `frame < startFrame + durationInFrames`), ou `undefined` hors sous-titre.
+ */
+export function findCaptionPageAtFrame(
+  captions: readonly CaptionPage[],
+  frame: number,
+): CaptionPage | undefined {
+  return captions.find(
+    (page) => frame >= page.startFrame && frame < page.startFrame + page.durationInFrames,
+  );
+}
+
+

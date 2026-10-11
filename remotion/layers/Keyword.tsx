@@ -117,6 +117,7 @@ export const KeywordLayer: React.FC<KeywordLayerProps> = ({ texts, keywords }) =
       {texts.map((cue, index) => (
         <Sequence
           key={`text-${cue.takeId}-${cue.startFrame}-${index}`}
+          name={`🏷️ Texte · ${cue.text}`}
           from={cue.startFrame}
           durationInFrames={cue.durationInFrames}
         >
@@ -126,6 +127,7 @@ export const KeywordLayer: React.FC<KeywordLayerProps> = ({ texts, keywords }) =
       {keywords.map((cue, index) => (
         <Sequence
           key={`keyword-${cue.takeId}-${cue.startFrame}-${index}`}
+          name={`⚡ Mot-clé · ${cue.word.toUpperCase()}`}
           from={cue.startFrame}
           durationInFrames={cue.durationInFrames}
         >

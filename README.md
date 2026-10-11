@@ -6,7 +6,9 @@ les silences et le contenu, alternance de cadrages, chapitres, B-roll et rendu
 par [Remotion](https://www.remotion.dev).
 
 Le montage d'un épisode se relit et se corrige dans un fichier texte,
-`montage.md`. La conception complète est dans [`docs/conception.md`](docs/conception.md).
+`montage.md`.
+- 📖 **[Guide Utilisateur pas à pas (`docs/guide-utilisateur.md`)](docs/guide-utilisateur.md)** : comment tourner, éditer `montage.md`, se repérer dans `VueEnsemble` / Remotion Studio et exporter ses vidéos.
+- 📐 **[Document de conception (`docs/conception.md`)](docs/conception.md)** : architecture et choix techniques.
 
 ## Prérequis
 

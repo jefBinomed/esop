@@ -1,8 +1,8 @@
 import type React from "react";
-import { Audio, staticFile, useVideoConfig } from "remotion";
+import { Audio, Sequence, staticFile, useVideoConfig } from "remotion";
 import type { Span } from "../../src/domain/timeline.js";
 import { musicVolumeAt } from "../../src/timeline/ducking.js";
-import { THEME } from "../theme.js";
+import { fileBasename, THEME } from "../theme.js";
 
 export interface MusicLayerProps {
   readonly shots: readonly Pick<Span, "start" | "end">[];
@@ -17,10 +17,12 @@ export const MusicLayer: React.FC<MusicLayerProps> = ({
   const { fps } = useVideoConfig();
 
   return (
-    <Audio
-      src={staticFile(src)}
-      loop
-      volume={(frame) => musicVolumeAt(frame / fps, shots, THEME.ducking)}
-    />
+    <Sequence name={`🎵 Musique · ${fileBasename(src)} (ducking -14 dB)`}>
+      <Audio
+        src={staticFile(src)}
+        loop
+        volume={(frame) => musicVolumeAt(frame / fps, shots, THEME.ducking)}
+      />
+    </Sequence>
   );
 };

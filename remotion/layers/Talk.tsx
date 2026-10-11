@@ -10,6 +10,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import type { TalkShot } from "../../src/timeline/compile.js";
+import { formatShotSequenceName } from "../../src/timeline/overview.js";
 import { framingTransform } from "../../src/zoom/framing.js";
 import { fileBasename, studioSafeVideoSrc, THEME } from "../theme.js";
 
@@ -65,9 +66,10 @@ const ShotView: React.FC<ShotViewProps> = ({ shot }) => {
 export const TalkLayer: React.FC<TalkLayerProps> = ({ shots }) => {
   return (
     <AbsoluteFill>
-      {shots.map((shot) => (
+      {shots.map((shot, index) => (
         <Sequence
           key={`${shot.takeId}-${shot.startFrame}`}
+          name={formatShotSequenceName(shot, index)}
           from={shot.startFrame}
           durationInFrames={shot.durationInFrames}
           premountFor={THEME.fps}

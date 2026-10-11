@@ -11,8 +11,13 @@ import {
   useVideoConfig,
 } from "remotion";
 import type { Episode } from "../src/domain/episode.js";
-import { activeWordIndex, type CaptionPage } from "../src/timeline/captions.js";
+import {
+  activeWordIndex,
+  findCaptionPageAtFrame,
+  type CaptionPage,
+} from "../src/timeline/captions.js";
 import type { BrollCue, CompiledTimeline, TalkShot } from "../src/timeline/compile.js";
+import { formatCompactTime, formatShotSequenceName } from "../src/timeline/overview.js";
 import { compileShort, SHORT_DIMENSIONS } from "../src/timeline/shorts.js";
 import { FRAMINGS } from "../src/zoom/framing.js";
 import { KeywordLayer } from "./layers/Keyword.js";
@@ -157,12 +162,10 @@ const ShortBrollItem: React.FC<ShortBrollItemProps> = ({ cue }) => {
 
 interface ShortCaptionPageViewProps {
   readonly page: CaptionPage;
+  readonly currentTime: number;
 }
 
-const ShortCaptionPageView: React.FC<ShortCaptionPageViewProps> = ({ page }) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  const currentTime = (page.startFrame + frame) / fps;
+const ShortCaptionPageView: React.FC<ShortCaptionPageViewProps> = ({ page, currentTime }) => {
   const activeIndex = activeWordIndex(page.words, currentTime);
 
   return (
@@ -219,6 +222,18 @@ const ShortCaptionPageView: React.FC<ShortCaptionPageViewProps> = ({ page }) => 
   );
 };
 
+const ShortActiveCaptionTrack: React.FC<{ readonly captions: readonly CaptionPage[] }> = ({
+  captions,
+}) => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const activePage = findCaptionPageAtFrame(captions, frame);
+  if (activePage === undefined) {
+    return null;
+  }
+  return <ShortCaptionPageView page={activePage} currentTime={frame / fps} />;
+};
+
 /**
  * Composition verticale `9:16` (`1080×1920`) pour YouTube Shorts / TikTok / Reels,
  * générée automatiquement à partir du même `montage.md` / `episode.json`.
@@ -237,23 +252,11 @@ export const ShortComposition: React.FC<ShortProps> = ({
 
   return (
     <AbsoluteFill style={{ backgroundColor: THEME.colors.background }}>
-      <AbsoluteFill>
-        {activeTimeline.shots.map((shot) => (
-          <Sequence
-            key={`short-shot-${shot.takeId}-${shot.startFrame}`}
-            from={shot.startFrame}
-            durationInFrames={shot.durationInFrames}
-            premountFor={THEME.fps}
-          >
-            <ShortShotView shot={shot} />
-          </Sequence>
-        ))}
-      </AbsoluteFill>
-
-      <AbsoluteFill>
+      <AbsoluteFill style={{ zIndex: 2 }}>
         {activeTimeline.brolls.map((cue, index) => (
           <Sequence
             key={`short-broll-${cue.takeId}-${cue.startFrame}-${index}`}
+            name={`🖼️ B-Roll · ${fileBasename(cue.asset)} (${formatCompactTime(cue.start)}→${formatCompactTime(cue.end)})`}
             from={cue.startFrame}
             durationInFrames={cue.durationInFrames}
             premountFor={THEME.fps}
@@ -263,9 +266,43 @@ export const ShortComposition: React.FC<ShortProps> = ({
         ))}
       </AbsoluteFill>
 
+      <AbsoluteFill style={{ zIndex: 4 }}>
+        <KeywordLayer texts={activeTimeline.texts} keywords={activeTimeline.keywords} />
+      </AbsoluteFill>
+
+      {showCaptions && activeTimeline.captions.length > 0 ? (
+        <AbsoluteFill style={{ zIndex: 3, pointerEvents: "none" }}>
+          <Sequence name={`💬 Sous-titres dynamiques (${activeTimeline.captions.length} pages)`}>
+            <ShortActiveCaptionTrack captions={activeTimeline.captions} />
+          </Sequence>
+        </AbsoluteFill>
+      ) : null}
+
+      {hasMusic ? (
+        <MusicLayer
+          shots={activeTimeline.shots}
+          {...(musicSrc !== undefined ? { src: musicSrc } : {})}
+        />
+      ) : null}
+
+      <AbsoluteFill style={{ zIndex: 1 }}>
+        {activeTimeline.shots.map((shot, index) => (
+          <Sequence
+            key={`short-shot-${shot.takeId}-${shot.startFrame}`}
+            name={formatShotSequenceName(shot, index)}
+            from={shot.startFrame}
+            durationInFrames={shot.durationInFrames}
+            premountFor={THEME.fps}
+          >
+            <ShortShotView shot={shot} />
+          </Sequence>
+        ))}
+      </AbsoluteFill>
+
       {activeTitle.trim().length > 0 ? (
         <AbsoluteFill
           style={{
+            zIndex: 5,
             justifyContent: "flex-start",
             alignItems: "center",
             paddingTop: 96,
@@ -291,31 +328,9 @@ export const ShortComposition: React.FC<ShortProps> = ({
         </AbsoluteFill>
       ) : null}
 
-      <KeywordLayer texts={activeTimeline.texts} keywords={activeTimeline.keywords} />
-
-      {showCaptions ? (
-        <AbsoluteFill style={{ pointerEvents: "none" }}>
-          {activeTimeline.captions.map((page, index) => (
-            <Sequence
-              key={`short-caption-${page.startFrame}-${index}`}
-              from={page.startFrame}
-              durationInFrames={page.durationInFrames}
-            >
-              <ShortCaptionPageView page={page} />
-            </Sequence>
-          ))}
-        </AbsoluteFill>
-      ) : null}
-
-      {hasMusic ? (
-        <MusicLayer
-          shots={activeTimeline.shots}
-          {...(musicSrc !== undefined ? { src: musicSrc } : {})}
-        />
-      ) : null}
-
       <AbsoluteFill
         style={{
+          zIndex: 6,
           pointerEvents: "none",
           background:
             "radial-gradient(ellipse at center, rgba(0,0,0,0) 68%, rgba(0,0,0,0.34) 100%)",

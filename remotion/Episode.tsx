@@ -36,19 +36,32 @@ export const EpisodeComposition: React.FC<EpisodeProps> = ({
 
   return (
     <AbsoluteFill style={{ backgroundColor: THEME.colors.background }}>
-      <TalkLayer shots={activeTimeline.shots} />
-      <BrollLayer brolls={activeTimeline.brolls} />
-      {showCaptions ? <CaptionsLayer captions={activeTimeline.captions} /> : null}
-      <ChapterLayer chapters={activeTimeline.chapters} />
-      <KeywordLayer texts={activeTimeline.texts} keywords={activeTimeline.keywords} />
+      <AbsoluteFill style={{ zIndex: 5 }}>
+        <ChapterLayer chapters={activeTimeline.chapters} />
+      </AbsoluteFill>
+      <AbsoluteFill style={{ zIndex: 2 }}>
+        <BrollLayer brolls={activeTimeline.brolls} />
+      </AbsoluteFill>
+      <AbsoluteFill style={{ zIndex: 4 }}>
+        <KeywordLayer texts={activeTimeline.texts} keywords={activeTimeline.keywords} />
+      </AbsoluteFill>
+      {showCaptions ? (
+        <AbsoluteFill style={{ zIndex: 3, pointerEvents: "none" }}>
+          <CaptionsLayer captions={activeTimeline.captions} />
+        </AbsoluteFill>
+      ) : null}
       {hasMusic ? (
         <MusicLayer
           shots={activeTimeline.shots}
           {...(musicSrc !== undefined ? { src: musicSrc } : {})}
         />
       ) : null}
+      <AbsoluteFill style={{ zIndex: 1 }}>
+        <TalkLayer shots={activeTimeline.shots} />
+      </AbsoluteFill>
       <AbsoluteFill
         style={{
+          zIndex: 6,
           pointerEvents: "none",
           background:
             "radial-gradient(ellipse at center, rgba(0,0,0,0) 68%, rgba(0,0,0,0.32) 100%)",
