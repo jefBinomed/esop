@@ -20,7 +20,7 @@ npm run esop -- ingest <dossier-épisode> [--file <rush>]
 npm run esop -- takes [--out episodes/<nom>]
 npm run esop -- cut [--out episodes/<nom>]
 npm run esop -- preview [--out episodes/<nom>]
-npm run esop -- render [--out episodes/<nom>] [--scale <facteur>]
+npm run esop -- render [--out episodes/<nom>] [--scale <facteur>] [--short]
 npm run esop -- studio [--out episodes/<nom>]
 ```
 
@@ -35,10 +35,11 @@ npm run esop -- studio [--out episodes/<nom>]
 - [`src/takes/`](src/takes/evaluate.ts) : Lecture de `script.md` (`script.ts`), évaluation et recommandation des prises par chapitre (`evaluate.ts`), lecture/écriture de `takes.md` (`format.ts`).
 - [`src/cut/`](src/cut/segments.ts) : Détection des silences audio via `ffmpeg silencedetect` (`silences.ts`) et découpage en segments avec marge de respiration et fusion des micro-segments (`segments.ts`).
 - [`src/zoom/`](src/zoom/pattern.ts) : Alternance des cadrages `large` (`×1.11`) / `serré` (`×1.7`) centrés sur le visage (`framing.ts`, `pattern.ts`).
+- [`src/broll/`](src/broll/suggest.ts) : Suggestion automatique de placements B-roll par rapprochement lexical entre les assets du dossier et les mots prononcés (`suggest.ts`).
 - [`src/montage/`](src/montage/format.ts) : Sérialisation, parsing et synchronisation de `montage.md` (`format.ts`, `timecode.ts`).
-- [`src/timeline/`](src/timeline/compile.ts) : Compilation d'un `Episode` en `CompiledTimeline` séquentielle pour Remotion (`compile.ts`), découpage des sous-titres mot à mot (`captions.ts`) et calcul de l'enveloppe de ducking musical (`ducking.ts`).
+- [`src/timeline/`](src/timeline/compile.ts) : Compilation d'un `Episode` en `CompiledTimeline` séquentielle pour Remotion (`compile.ts`), sélection et compilation des Shorts verticaux `9:16` (`shorts.ts`), découpage des sous-titres mot à mot (`captions.ts`) et calcul de l'enveloppe de ducking musical (`ducking.ts`).
 - [`src/export/`](src/export/ffmpeg-preview.ts) : Prévisualisation rapide par extraction parallèle de segments `ffmpeg` (`ffmpeg-preview.ts`), planche de vignettes horodatées (`contact-sheet.ts`), et préparation par liens symboliques / exécution du rendu Remotion (`remotion.ts`).
-- [`remotion/`](remotion/Episode.tsx) : Moteur de rendu habillé (`Root.tsx`, `Episode.tsx`, `theme.ts`) et calques (`layers/Talk.tsx`, `layers/Captions.tsx`, `layers/Chapter.tsx`, `layers/Broll.tsx`, `layers/Keyword.tsx`, `layers/Music.tsx`).
+- [`remotion/`](remotion/Episode.tsx) : Moteur de rendu habillé (`Root.tsx`, `Episode.tsx`, `Short.tsx`, `theme.ts`) et calques (`layers/Talk.tsx`, `layers/Captions.tsx`, `layers/Chapter.tsx`, `layers/Broll.tsx`, `layers/Keyword.tsx`, `layers/Music.tsx`).
 
 ## 4. Règles d'édition de `montage.md` (Rôle de l'Agent au montage)
 

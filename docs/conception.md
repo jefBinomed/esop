@@ -187,16 +187,19 @@ src/
   cut/silences.ts            gaps + silencedetect → segments
   cut/fillers.ts             « euh », répétitions, faux départs
   zoom/pattern.ts            attribution des cadrages
+  broll/suggest.ts           suggestion automatique de B-roll par rapprochement lexical
   montage/parse.ts           montage.md → Timeline
   montage/serialize.ts       Timeline → montage.md (préserve les annotations)
   timeline/compile.ts        Episode → CompiledTimeline séquentielle pour Remotion
+  timeline/shorts.ts         Episode → CompiledShort vertical 9:16 (1080×1920, <= 60 s)
   timeline/captions.ts       TalkShot[] → pages de sous-titres mot à mot (3 mots max)
   timeline/ducking.ts        enveloppe de ducking musical sous la parole
   export/ffmpeg-preview.ts   Timeline → graphe de filtres ffmpeg (coupe brute)
   cli.ts
 remotion/
-  Root.tsx                   enregistre la composition, durée calculée via calculateMetadata
-  Episode.tsx                lit episode.json, empile les calques
+  Root.tsx                   enregistre les compositions Episode (16:9) et Short (9:16)
+  Episode.tsx                lit episode.json, empile les calques 16:9
+  Short.tsx                  composition verticale 9:16 centrée sur le visage
   layers/Talk.tsx            rushs via <OffthreadVideo trimBefore/trimAfter>, cadrage
   layers/Chapter.tsx         carte de chapitre animée + jingle
   layers/Broll.tsx           clips plein cadre, images en Ken Burns
@@ -271,8 +274,11 @@ Tout est dans `theme.ts` et les calques, donc partagé par les épisodes.
    (`src/timeline/captions.ts` + `remotion/layers/Captions.tsx`), mots clés,
    zoom progressif (`+2 %`), étalonnage léger (`THEME.colorGradingFilter`) et
    jingle sur les cartes de chapitre.
-4. **V3, optionnel** : placement de B-roll suggéré automatiquement, génération
-   des shorts verticaux à partir du même `montage.md`.
+4. **V3, livrée** : placement de B-roll suggéré automatiquement
+   (`src/broll/suggest.ts`) et génération des Shorts verticaux `9:16`
+   (`1080×1920`) à partir du même `montage.md` (`src/timeline/shorts.ts`,
+   `remotion/Short.tsx`, composition `Short` dans Remotion Studio et
+   `esop render --short` → `short.mp4`).
 
 ## 9. Réponses aux questions ouvertes (2026-10-07)
 

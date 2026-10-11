@@ -43,18 +43,29 @@ export async function preparePublicDir(
   }
 }
 
+export interface RenderOptions {
+  readonly scale?: number;
+  readonly compositionId?: "Episode" | "Short";
+}
+
 /** Arguments CLI destinés à `npx remotion render`. */
 export function remotionRenderArgs(
   entryPoint: string,
   output: string,
   publicDir: string,
-  scale?: number,
+  scaleOrOptions?: number | RenderOptions,
+  compositionId: "Episode" | "Short" = "Episode",
 ): string[] {
+  const scale = typeof scaleOrOptions === "number" ? scaleOrOptions : scaleOrOptions?.scale;
+  const resolvedCompositionId =
+    typeof scaleOrOptions === "object" && scaleOrOptions !== null
+      ? (scaleOrOptions.compositionId ?? compositionId)
+      : compositionId;
   return [
     "remotion",
     "render",
     entryPoint,
-    "Episode",
+    resolvedCompositionId,
     output,
     `--public-dir=${publicDir}`,
     ...(scale !== undefined ? [`--scale=${scale}`] : []),
@@ -71,9 +82,10 @@ export async function runRemotionRender(
   entryPoint: string,
   output: string,
   publicDir: string,
-  scale?: number,
+  scaleOrOptions?: number | RenderOptions,
+  compositionId: "Episode" | "Short" = "Episode",
 ): Promise<void> {
-  await runNpx(remotionRenderArgs(entryPoint, output, publicDir, scale));
+  await runNpx(remotionRenderArgs(entryPoint, output, publicDir, scaleOrOptions, compositionId));
 }
 
 /** Ouvre le studio interactif Remotion via `npx remotion studio`. */

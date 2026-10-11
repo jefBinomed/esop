@@ -135,6 +135,21 @@ describe("export/remotion", () => {
       "--scale=0.5",
     ]);
 
+    expect(
+      remotionRenderArgs("remotion/index.ts", "episodes/ep/short.mp4", "public", {
+        compositionId: "Short",
+        scale: 0.5,
+      }),
+    ).toEqual([
+      "remotion",
+      "render",
+      "remotion/index.ts",
+      "Short",
+      "episodes/ep/short.mp4",
+      "--public-dir=public",
+      "--scale=0.5",
+    ]);
+
     expect(remotionStudioArgs("remotion/index.ts", "public")).toEqual([
       "remotion",
       "studio",

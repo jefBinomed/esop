@@ -33,8 +33,8 @@ const USAGE = `esop — assistant de montage « Et si on parlait »
   esop preview [--out <dossier>] [--width 960]
       Coupe brute ffmpeg avec cadrages simulés → <out>/preview.mp4
       et planche de vignettes toutes les 5 s → <out>/preview.png
-  esop render [--out <dossier>] [--scale <facteur>]
-      Rendu habillé Remotion 1080p30 → <out>/final.mp4
+  esop render [--out <dossier>] [--scale <facteur>] [--short]
+      Rendu habillé Remotion 1080p30 → <out>/final.mp4 (ou <out>/short.mp4 en 9:16 avec --short)
   esop studio [--out <dossier>]
       Ouvre le studio interactif Remotion sur l'épisode
 
@@ -178,16 +178,24 @@ async function preview(argv: readonly string[]): Promise<void> {
 async function render(argv: readonly string[]): Promise<void> {
   const { values } = parseArgs({
     args: [...argv],
-    options: { out: { type: "string" }, scale: { type: "string" } },
+    options: {
+      out: { type: "string" },
+      scale: { type: "string" },
+      short: { type: "boolean" },
+    },
   });
   const out = values.out ?? (await onlyEpisodeDir());
   const { episode } = await syncEpisodeFromMontage(out);
   const publicDir = "public";
   await preparePublicDir(publicDir, out, episode);
 
-  const output = join(out, "final.mp4");
+  const isShort = values.short === true;
+  const output = join(out, isShort ? "short.mp4" : "final.mp4");
   const scale = values.scale !== undefined ? Number(values.scale) : undefined;
-  await runRemotionRender("remotion/index.ts", output, publicDir, scale);
+  await runRemotionRender("remotion/index.ts", output, publicDir, {
+    compositionId: isShort ? "Short" : "Episode",
+    ...(scale !== undefined ? { scale } : {}),
+  });
   process.stderr.write(`→ ${output}\n`);
 }
 
